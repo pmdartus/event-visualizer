@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event visualizer</title>
+  </head>
+  <body>
+    <template type="tree-preset" name="simple-tree">
+<div id="a">
+  <div id="b"></div>
+</div>
+    </template>
+
+    <template type="tree-preset" name="shadow-tree">
+<div id="a">
+  <template shadow-root mode="open">
+    <div id="b"></div>
+  </template>
+</div>
+    </template>
+
+    <template type="tree-preset" name="nested-shadow-tree">
+<div id="a">
+  <template shadow-root mode="open">
+    <div id="b">
+      <template shadow-root mode="open">
+        <div id="c"></div>
+      </template>
+    </div>
+  </template>
+</div>
+    </template>
+
+    <template type="tree-preset" name="slotted-content">
+<div id="a">
+  <template shadow-root mode="open">
+    <div id="b">
+      <slot></slot>
+    </div>
+  </template>
+  <div id="c"></div>
+</div>
+    </template>
+
+    <main>
+      <select id="select-preset" name="select-preset"></select>
+      <pre><code id="editor-preset"></code></pre>
+    </main>
+
+    <script src="main.js" type="module"></script>
+  </body>
+</html>
