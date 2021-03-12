@@ -1,5 +1,5 @@
 import PRESETS, { Preset } from "./presets";
-import { updateTreeView } from "./tree-view";
+import { init as initTreeView } from "./tree-view";
 import { init as initStepsView } from "./steps-view";
 import { simulateDispatchEvent } from "./simulator";
 
@@ -63,7 +63,7 @@ function updateCodeEditor(preset: Preset) {
     const tree = buildDomTree(preset.content);
   
     updateCodeEditor(preset);
-    updateTreeView(preset, tree);
+    treeView.resetTreeView(preset, tree);
   
     const target = tree.nodes.find(
       (node) => node instanceof Element && node.getAttribute("id") === preset.target
@@ -99,8 +99,8 @@ function updateCodeEditor(preset: Preset) {
     handlePresetChange(preset);
   });
 
+  const treeView = initTreeView();
   const stepsView = initStepsView((step) => {
-    console.log(step)
   });
 
   handlePresetChange(PRESETS[0]);
