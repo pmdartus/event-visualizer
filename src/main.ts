@@ -1,16 +1,18 @@
 import PRESETS, { Preset } from "./presets";
+import { updateTreeView } from "./tree-view";
+import { simulateDispatchEvent } from "./simulator";
 
-const SELECT_PRESET: HTMLSelectElement = document.querySelector(
-  "#select-preset"
-)!;
-const PRESET_EDITOR: HTMLPreElement = document.querySelector("#editor-preset")!;
+import "./main.css";
 
-type TreeNode = Element | ShadowRoot;
+export type TreeNode = Element | ShadowRoot;
 
-interface DomTree {
+export interface DomTree {
   root: Element;
   nodes: TreeNode[];
 }
+
+const SELECT_PRESET: HTMLSelectElement = document.querySelector("#select-preset")!;
+const PRESET_EDITOR: HTMLPreElement = document.querySelector("#editor-preset")!;
 
 function buildDomTree(html: string): DomTree {
   const tmpl = document.createElement("template");
@@ -18,9 +20,7 @@ function buildDomTree(html: string): DomTree {
 
   const { content } = tmpl;
   if (content.children.length !== 1) {
-    throw new Error(
-      `Invalid preset. Expect 1 but found ${content.children.length} root elements`
-    );
+    throw new Error(`Invalid preset. Expect 1 but found ${content.children.length} root elements`);
   }
 
   const root = content.children[0].cloneNode(true) as HTMLElement;
@@ -30,10 +30,7 @@ function buildDomTree(html: string): DomTree {
 
   let node;
   while ((node = remaining.pop())) {
-    if (
-      node instanceof HTMLTemplateElement &&
-      node.hasAttribute("shadow-root")
-    ) {
+    if (node instanceof HTMLTemplateElement && node.hasAttribute("shadow-root")) {
       const shadowRoot = node.parentElement!.attachShadow({
         mode: (node.getAttribute("mode") as ShadowRootMode) ?? "open",
       });
@@ -56,9 +53,29 @@ function buildDomTree(html: string): DomTree {
   };
 }
 
-function handlePresetChange(preset: Preset) {
-  const res = buildDomTree(preset.content);
+function updateCodeEditor(preset: Preset) {
   PRESET_EDITOR.textContent = preset.content;
+}
+
+function handlePresetChange(preset: Preset) {
+  const tree = buildDomTree(preset.content);
+
+  updateCodeEditor(preset);
+  updateTreeView(preset, tree);
+
+  const target = tree.nodes.find(
+    (node) => node instanceof Element && node.getAttribute("id") === preset.target
+  )!;
+
+  const res = simulateDispatchEvent({
+    tree,
+    target,
+    eventOptions: {
+      bubbles: true,
+      composed: true
+    }
+  });
+  console.log(res);
 }
 
 (() => {

@@ -1,0 +1,17 @@
+
+#tree-view {
+  --node-size: 60px;
+  --text-size: 20px; 
+}
+
+.dom-element {
+  fill: transparent;
+  stroke: red;
+  stroke-width: 3px;
+  width: var(--node-size);
+  height: var(--node-size);
+}
+
+.dom-element text {
+  font-size: var(--text-size);
+}
