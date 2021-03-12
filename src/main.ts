@@ -1,5 +1,6 @@
 import PRESETS, { Preset } from "./presets";
 import { updateTreeView } from "./tree-view";
+import { init as initStepsView } from "./steps-view";
 import { simulateDispatchEvent } from "./simulator";
 
 import "./main.css";
@@ -57,28 +58,29 @@ function updateCodeEditor(preset: Preset) {
   PRESET_EDITOR.textContent = preset.content;
 }
 
-function handlePresetChange(preset: Preset) {
-  const tree = buildDomTree(preset.content);
-
-  updateCodeEditor(preset);
-  updateTreeView(preset, tree);
-
-  const target = tree.nodes.find(
-    (node) => node instanceof Element && node.getAttribute("id") === preset.target
-  )!;
-
-  const res = simulateDispatchEvent({
-    tree,
-    target,
-    eventOptions: {
-      bubbles: true,
-      composed: true
-    }
-  });
-  console.log(res);
-}
-
 (() => {
+  function handlePresetChange(preset: Preset) {
+    const tree = buildDomTree(preset.content);
+  
+    updateCodeEditor(preset);
+    updateTreeView(preset, tree);
+  
+    const target = tree.nodes.find(
+      (node) => node instanceof Element && node.getAttribute("id") === preset.target
+    )!;
+  
+    const res = simulateDispatchEvent({
+      tree,
+      target,
+      eventOptions: {
+        bubbles: true,
+        composed: true
+      }
+    });
+    
+    stepsView.setSimulationResult(res);
+  }
+
   for (const preset of PRESETS) {
     const option = document.createElement("option");
     option.value = preset.id;
@@ -95,6 +97,10 @@ function handlePresetChange(preset: Preset) {
     }
 
     handlePresetChange(preset);
+  });
+
+  const stepsView = initStepsView((step) => {
+    console.log(step)
   });
 
   handlePresetChange(PRESETS[0]);

@@ -1,5 +1,6 @@
-import { DomTree, TreeNode } from "./main";
+import { DomTree } from "./main";
 import { Preset } from "./presets";
+import { getTreeNodeLabel } from "./utils";
 
 import "./tree-view.css";
 
@@ -16,18 +17,6 @@ function createSvgElement<K extends keyof SVGElementTagNameMap>(
 
 function resetTreeView() {
   TREE_VIEW.innerHTML = "";
-}
-
-function getTreeNodeLabel(node: TreeNode): string {
-  if (node instanceof Element) {
-    let label = node.tagName.toLocaleLowerCase();
-    if (node.hasAttribute('id')) {
-      label += `#${node.getAttribute('id')}`
-    }
-    return label;
-  } else {
-    return '[shadow-root]';
-  }
 }
 
 export function updateTreeView(preset: Preset, tree: DomTree) {
