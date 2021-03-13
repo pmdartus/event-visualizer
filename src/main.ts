@@ -61,23 +61,23 @@ function updateCodeEditor(preset: Preset) {
 (() => {
   function handlePresetChange(preset: Preset) {
     const tree = buildDomTree(preset.content);
-  
+
     updateCodeEditor(preset);
     treeView.resetTreeView(preset, tree);
-  
+
     const target = tree.nodes.find(
       (node) => node instanceof Element && node.getAttribute("id") === preset.target
     )!;
-  
+
     const res = simulateDispatchEvent({
       tree,
       target,
       eventOptions: {
         bubbles: true,
-        composed: true
-      }
+        composed: true,
+      },
     });
-    
+
     stepsView.setSimulationResult(res);
   }
 
@@ -100,8 +100,7 @@ function updateCodeEditor(preset: Preset) {
   });
 
   const treeView = initTreeView();
-  const stepsView = initStepsView((step) => {
-  });
+  const stepsView = initStepsView((step) => {});
 
   handlePresetChange(PRESETS[0]);
 })();

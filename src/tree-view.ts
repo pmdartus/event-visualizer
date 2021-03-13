@@ -27,6 +27,8 @@ interface GraphNode {
   id: GraphNodeId;
   type: NodeType;
   treeNode: TreeNode | null;
+  x: number;
+  y: number;
 }
 
 interface GraphEdge {
@@ -38,10 +40,14 @@ interface GraphEdge {
 interface Graph {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  layers: Layer[];
 }
 
-const NODE_SIZE = 60;
-const NODE_MARGIN = 20;
+type Layer = GraphNodeId[];
+
+const NODE_SIZE = 80;
+const HORIZONTAL_SPACING = 50;
+const VERTICAL_SPACING = 50;
 
 const TREE_VIEW: SVGElement = document.querySelector("#tree-view")!;
 
@@ -51,12 +57,19 @@ function createSvgElement<K extends keyof SVGElementTagNameMap>(
   return document.createElementNS("http://www.w3.org/2000/svg", tagName);
 }
 
+function createGraphNode(config: Omit<GraphNode, "x" | "y">): GraphNode {
+  return {
+    ...config,
+    x: 0,
+    y: 0,
+  };
+}
+
 function graphFromDomTree(tree: DomTree): Graph {
   const graphNodes: GraphNode[] = [];
   const graphEdges: GraphEdge[] = [];
 
   const treeNodeToId: Map<TreeNode, string> = new Map();
-
 
   for (let index = 0; index < tree.nodes.length; index++) {
     const treeNode = tree.nodes[index];
@@ -65,13 +78,14 @@ function graphFromDomTree(tree: DomTree): Graph {
     const type = treeNode instanceof Element ? NodeType.Element : NodeType.ShadowRoot;
 
     treeNodeToId.set(treeNode, id);
-    graphNodes.push({
-      id,
-      type,
-      treeNode,
-    });
+    graphNodes.push(
+      createGraphNode({
+        id,
+        type,
+        treeNode,
+      })
+    );
   }
-
 
   for (const treeNode of tree.nodes) {
     const id = treeNodeToId.get(treeNode)!;
@@ -112,54 +126,59 @@ function graphFromDomTree(tree: DomTree): Graph {
   return {
     nodes: graphNodes,
     edges: graphEdges,
+    layers: [],
   };
 }
 
-function assignGraphNodeToLayers(graph: Graph): string[][] {
-  const layers: string[][] = [];
+function assignGraphNodeToLayers(graph: Graph) {
+  const layers: Layer[] = [];
 
   let remainingNodes = [...graph.nodes];
   let remainingEdges = [...graph.edges];
 
   while (remainingNodes.length !== 0 || remainingEdges.length !== 0) {
     const layer = remainingNodes
-      .filter(node => remainingEdges.every(edge => edge.to !== node.id))
-      .map(node => node.id);
+      .filter((node) => remainingEdges.every((edge) => edge.to !== node.id))
+      .map((node) => node.id);
 
-    remainingNodes = remainingNodes.filter(node => !layer.includes(node.id));
-    remainingEdges = remainingEdges.filter(edge => !layer.includes(edge.from));
+    remainingNodes = remainingNodes.filter((node) => !layer.includes(node.id));
+    remainingEdges = remainingEdges.filter((edge) => !layer.includes(edge.from));
 
     layers.push(layer);
   }
 
-  return layers;
+  graph.layers = layers;
 }
 
-function fillLayers(graph: Graph, layers: string[][]) {
-  let currentId = 0; 
+function fillLayers(graph: Graph) {
+  const { nodes, edges, layers } = graph;
+
+  let currentId = 0;
 
   for (let i = 0; i < layers.length - 1; i++) {
     const layer = layers[i];
     const nextLayer = layers[i + 1];
 
     for (const nodeId of layer) {
-      const outgoingEdges = graph.edges.filter(edge => edge.from === nodeId);
+      const outgoingEdges = edges.filter((edge) => edge.from === nodeId);
 
       for (const outgoingEdge of outgoingEdges) {
         if (!nextLayer.includes(outgoingEdge.to)) {
           const virtualId = `#${currentId++}`;
 
-          graph.nodes.push({
-            id: virtualId,
-            type: NodeType.Virtual,
-            treeNode: null,
-          });
+          nodes.push(
+            createGraphNode({
+              id: virtualId,
+              type: NodeType.Virtual,
+              treeNode: null,
+            })
+          );
           nextLayer.push(virtualId);
 
-          graph.edges.push({
+          edges.push({
             from: virtualId,
             to: outgoingEdge.to,
-            type: outgoingEdge.type
+            type: outgoingEdge.type,
           });
           outgoingEdge.to = virtualId;
         }
@@ -168,8 +187,79 @@ function fillLayers(graph: Graph, layers: string[][]) {
   }
 }
 
-function reorderLayers(graph: Graph, layers: string[][]) {
+function layoutGraphNodes(graph: Graph) {
+  const { nodes, layers } = graph;
 
+  for (const node of nodes) {
+    const layerIndex = layers.findIndex((layer) => layer.includes(node.id));
+    const indexInLayer = layers[layerIndex].indexOf(node.id);
+
+    node.x = (NODE_SIZE + HORIZONTAL_SPACING) * indexInLayer;
+    node.y = (NODE_SIZE + VERTICAL_SPACING) * layerIndex;
+  }
+}
+
+function renderGraph(graph: Graph) {
+  const { nodes, edges } = graph;
+
+  for (const node of nodes) {
+    if (node.type !== NodeType.Virtual) {
+      const rect = createSvgElement("rect");
+      rect.setAttribute("width", String(NODE_SIZE));
+      rect.setAttribute("height", String(NODE_SIZE));
+      rect.setAttribute("x", String(node.x));
+      rect.setAttribute("y", String(node.y));
+
+      rect.classList.add("node");
+      if (node.type === NodeType.Element) {
+        rect.classList.add("node-element");
+      } else if (node.type === NodeType.ShadowRoot) {
+        rect.classList.add("node-shadow-root");
+      }
+
+      TREE_VIEW.appendChild(rect);
+
+      const text = createSvgElement("text");
+      text.setAttribute("x", String(node.x + NODE_SIZE / 2));
+      text.setAttribute("y", String(node.y + NODE_SIZE / 2));
+      text.setAttribute("alignment-baseline", "central");
+      text.setAttribute("text-anchor", "middle");
+
+      text.textContent = getTreeNodeLabel(node.treeNode!);
+
+      TREE_VIEW.appendChild(text);
+    }
+  }
+
+  for (const edge of edges) {
+    const fromNode = nodes.find((node) => node.id === edge.from)!;
+    const toNode = nodes.find((node) => node.id === edge.to)!;
+
+    const line = createSvgElement("line");
+    line.setAttribute("x1", String(fromNode.x + NODE_SIZE / 2));
+    line.setAttribute(
+      "y1",
+      String(
+        fromNode.type === NodeType.Virtual ? fromNode.y + NODE_SIZE / 2 : fromNode.y + NODE_SIZE
+      )
+    );
+    line.setAttribute("x2", String(toNode.x + NODE_SIZE / 2));
+    line.setAttribute(
+      "y2",
+      String(toNode.type === NodeType.Virtual ? toNode.y + NODE_SIZE / 2 : toNode.y)
+    );
+
+    line.classList.add("node-connection");
+    if (edge.type === EdgeType.Child) {
+      line.classList.add("connection-child");
+    } else if (edge.type === EdgeType.ShadowRoot) {
+      line.classList.add("connection-shadow-root");
+    } else if (edge.type === EdgeType.AssignedElement) {
+      line.classList.add("connection-assigned-element");
+    }
+
+    TREE_VIEW.appendChild(line);
+  }
 }
 
 export function init() {
@@ -177,33 +267,11 @@ export function init() {
     TREE_VIEW.innerHTML = "";
 
     const graph = graphFromDomTree(tree);
-    const layers = assignGraphNodeToLayers(graph);
-    fillLayers(graph, layers);
-    reorderLayers(graph, layers);
 
-    console.log('>> graph:', graph);
-    
-    console.log('>> layers: ', layers);
-
-    for (let index = 0; index < tree.nodes.length; index++) {
-      const node = tree.nodes[index];
-
-      const rect = createSvgElement("rect");
-      rect.setAttribute("class", "dom-element");
-      rect.setAttribute("x", String(index * (NODE_SIZE + NODE_MARGIN)));
-      rect.setAttribute("y", "0");
-
-      TREE_VIEW.appendChild(rect);
-
-      const text = createSvgElement("text");
-      text.setAttribute("x", String(index * (NODE_SIZE + NODE_MARGIN) + NODE_SIZE / 2));
-      text.setAttribute("y", String(NODE_SIZE / 2));
-      text.setAttribute("alignment-baseline", "central");
-      text.setAttribute("text-anchor", "middle");
-      text.textContent = getTreeNodeLabel(node);
-
-      TREE_VIEW.appendChild(text);
-    }
+    assignGraphNodeToLayers(graph);
+    fillLayers(graph);
+    layoutGraphNodes(graph);
+    renderGraph(graph);
   }
 
   return {
