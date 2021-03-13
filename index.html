@@ -13,9 +13,17 @@
         <pre><code id="editor-preset"></code></pre>
       </section>
 
-      <svg id="tree-view" width="500" height="500"></svg>
+      <section section="visualizer">
+        <input type="checkbox" name="bubbles" id="bubbles" checked />
+        <label for="bubbles">Bubbles</label>
 
-      <section>
+        <input type="checkbox" name="composed" id="composed" checked />
+        <label for="composed">Composed</label>
+
+        <svg id="tree-view" width="100%" height="600" viewBox="-10 -10 600 600"></svg>
+      </section>
+
+      <section section="logs">
         <input type="range" id="steps-slider" min="0" max="0" />
         <ul id="steps-logs"></ul>
       </section>

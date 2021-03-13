@@ -1,5 +1,4 @@
-import { TreeNode } from "./main";
-import { EventDispatchingStep, SimulationResult } from "./simulator";
+import { EventDispatchingStep, SimulationResult, TreeNode } from "./simulator";
 import { getTreeNodeLabel } from "./utils";
 
 import "./steps-view.css";

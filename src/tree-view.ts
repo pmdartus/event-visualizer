@@ -1,6 +1,5 @@
-import { DomTree, TreeNode } from "./main";
-import { Preset } from "./presets";
 import { getTreeNodeLabel } from "./utils";
+import { EventDispatchingStep, DomTree, TreeNode } from "./simulator";
 
 import "./tree-view.css";
 
@@ -190,6 +189,8 @@ function fillLayers(graph: Graph) {
 function layoutGraphNodes(graph: Graph) {
   const { nodes, layers } = graph;
 
+  TREE_VIEW.innerHTML = "";
+
   for (const node of nodes) {
     const layerIndex = layers.findIndex((layer) => layer.includes(node.id));
     const indexInLayer = layers[layerIndex].indexOf(node.id);
@@ -209,12 +210,13 @@ function renderGraph(graph: Graph) {
       rect.setAttribute("height", String(NODE_SIZE));
       rect.setAttribute("x", String(node.x));
       rect.setAttribute("y", String(node.y));
+      rect.setAttribute("data-graph-id", node.id);
 
       rect.classList.add("node");
       if (node.type === NodeType.Element) {
-        rect.classList.add("node-element");
+        rect.classList.add("node__element");
       } else if (node.type === NodeType.ShadowRoot) {
-        rect.classList.add("node-shadow-root");
+        rect.classList.add("node__shadow-root");
       }
 
       TREE_VIEW.appendChild(rect);
@@ -225,6 +227,7 @@ function renderGraph(graph: Graph) {
       text.setAttribute("alignment-baseline", "central");
       text.setAttribute("text-anchor", "middle");
 
+      text.classList.add("node-label");
       text.textContent = getTreeNodeLabel(node.treeNode!);
 
       TREE_VIEW.appendChild(text);
@@ -249,13 +252,13 @@ function renderGraph(graph: Graph) {
       String(toNode.type === NodeType.Virtual ? toNode.y + NODE_SIZE / 2 : toNode.y)
     );
 
-    line.classList.add("node-connection");
+    line.classList.add("connection");
     if (edge.type === EdgeType.Child) {
-      line.classList.add("connection-child");
+      line.classList.add("connection__child");
     } else if (edge.type === EdgeType.ShadowRoot) {
-      line.classList.add("connection-shadow-root");
+      line.classList.add("connection__shadow-root");
     } else if (edge.type === EdgeType.AssignedElement) {
-      line.classList.add("connection-assigned-element");
+      line.classList.add("connection__assigned-element");
     }
 
     TREE_VIEW.appendChild(line);
@@ -263,10 +266,10 @@ function renderGraph(graph: Graph) {
 }
 
 export function init() {
-  function resetTreeView(preset: Preset, tree: DomTree) {
-    TREE_VIEW.innerHTML = "";
+  let graph: Graph;
 
-    const graph = graphFromDomTree(tree);
+  function resetTreeView(tree: DomTree) {
+    graph = graphFromDomTree(tree);
 
     assignGraphNodeToLayers(graph);
     fillLayers(graph);
@@ -274,7 +277,35 @@ export function init() {
     renderGraph(graph);
   }
 
+  function setEventDispatchingStep(step: EventDispatchingStep) {
+    const { target, currentTarget, composedPath } = step;
+
+    for (const svgNode of Array.from(TREE_VIEW.querySelectorAll(".node"))) {
+      const graphId = svgNode.getAttribute("data-graph-id");
+      const graphNode = graph.nodes.find((node) => node.id === graphId)!;
+
+      if (graphNode.treeNode === target) {
+        svgNode.classList.add("node__target");
+      } else {
+        svgNode.classList.remove("node__target");
+      }
+
+      if (graphNode.treeNode === currentTarget) {
+        svgNode.classList.add("node__current-target");
+      } else {
+        svgNode.classList.remove("node__current-target");
+      }
+
+      if (composedPath.includes(graphNode.treeNode!)) {
+        svgNode.classList.add("node__composed-path");
+      } else {
+        svgNode.classList.remove("node__composed-path");
+      }
+    }
+  }
+
   return {
     resetTreeView,
+    setEventDispatchingStep,
   };
 }
