@@ -3,6 +3,8 @@ import { LitElement, html, css, property, customElement } from "lit-element";
 import { EventDispatchingStep } from "./simulator";
 import { getEventTargetLabel } from "./utils/label";
 
+export type ChangeStepEvent = CustomEvent<{ step: number }>;
+
 const STEP_DURATION = 2000;
 
 @customElement("tree-logs")
@@ -49,11 +51,11 @@ export class TreeLogs extends LitElement {
   }
 
   dispatchStepChange(step: number) {
-    this.dispatchEvent(
-      new CustomEvent("stepchange", {
-        detail: { step },
-      })
-    );
+    const changeStepEvent: ChangeStepEvent = new CustomEvent("stepchange", {
+      detail: { step },
+    });
+
+    this.dispatchEvent(changeStepEvent);
   }
 
   render() {

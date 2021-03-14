@@ -11,10 +11,6 @@ export interface EventDispatchingStep {
   composedPath: EventTarget[];
 }
 
-export interface SimulationResult {
-  steps: EventDispatchingStep[];
-}
-
 const EVENT_NAME = "__TEST_EVENT__";
 
 export function buildDomTree(html: string): DomTree {
@@ -60,7 +56,7 @@ export function simulateDispatchEvent(config: {
   tree: DomTree;
   target: TreeNode;
   eventOptions: EventInit;
-}): SimulationResult {
+}): EventDispatchingStep[] {
   const { tree, target, eventOptions } = config;
   const steps: EventDispatchingStep[] = [];
 
@@ -83,7 +79,5 @@ export function simulateDispatchEvent(config: {
     node.removeEventListener(EVENT_NAME, handler);
   }
 
-  return {
-    steps,
-  };
+  return steps;
 }

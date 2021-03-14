@@ -1,37 +1,102 @@
 import { LitElement, html, css, property, customElement } from "lit-element";
 
-import { buildDomTree, simulateDispatchEvent } from "./simulator";
+import PRESETS from "./utils/presets";
+import { buildDomTree, EventDispatchingStep, simulateDispatchEvent } from "./simulator";
+import { loadStateFromSearchParams, saveStateToSearchParams } from "./utils/search-params";
 
 import "./tree-editor";
 import "./tree-logs";
 
-const tree = buildDomTree(`
-<div id="a">
-  <template shadow-root mode="open">
-    <div id="b">
-      <slot></slot>
-    </div>
-  </template>
-  <div id="c"></div>
-</div>
-`);
-
-const target = tree.nodes.find(
-  (node) => node instanceof Element && node.getAttribute("id") === "c"
-)!;
-const res = simulateDispatchEvent({
-  tree,
-  target,
-  eventOptions: {
-    bubbles: true,
-    composed: true,
-  },
-});
+import type { PresetChangeEvent, TreeChangeEvent } from "./tree-editor";
+import type { ChangeStepEvent } from "./tree-logs";
 
 @customElement("event-app")
 export class EventApp extends LitElement {
-  @property() steps = res.steps;
-  @property() activeStep = 0;
+  @property() presetId: string | null = null;
+  @property() rawTree: string;
+  @property() targetId: string;
+
+  @property() steps: EventDispatchingStep[] = [];
+  @property() activeStep: number = 0;
+
+  constructor() {
+    super();
+
+    let { rawTree, targetId } = loadStateFromSearchParams();
+
+    if (rawTree === null || targetId === null) {
+      const preset = PRESETS[0];
+
+      this.presetId = preset.id;
+      rawTree = preset.rawTree;
+      targetId = preset.targetId;
+    }
+
+    this.rawTree = rawTree;
+    this.targetId = targetId;
+
+    this.saveState();
+    this.recomputeSteps();
+  }
+
+  handlePresetChange(evt: PresetChangeEvent) {
+    const { id: presetId } = evt.detail;
+
+    const preset = PRESETS.find((preset) => preset.id === presetId)!;
+
+    this.presetId = presetId;
+    this.rawTree = preset.rawTree;
+    this.targetId = preset.targetId;
+
+    this.saveState();
+    this.recomputeSteps();
+  }
+
+  handleTreeChange(evt: TreeChangeEvent) {
+    this.presetId = null;
+    this.rawTree = evt.detail.value;
+
+    this.saveState();
+    this.recomputeSteps();
+  }
+
+  saveState() {
+    saveStateToSearchParams(this.rawTree, this.targetId);
+  }
+
+  recomputeSteps() {
+    const tree = buildDomTree(this.rawTree);
+
+    const target = tree.nodes.find(
+      (node) => node instanceof Element && node.getAttribute("id") === this.targetId
+    )!;
+    this.steps = simulateDispatchEvent({
+      tree,
+      target,
+      eventOptions: {
+        bubbles: true,
+        composed: true,
+      },
+    });
+  }
+
+  render() {
+    return html`
+      <div class="container">
+        <tree-editor
+          .presetId=${this.presetId}
+          .value=${this.rawTree}
+          @presetchange=${this.handlePresetChange}
+          @treechange=${this.handleTreeChange}
+        ></tree-editor>
+        <tree-logs
+          .steps=${this.steps}
+          .activeStep=${this.activeStep}
+          @stepchange=${(evt: ChangeStepEvent) => (this.activeStep = evt.detail.step)}
+        ></tree-logs>
+      </div>
+    `;
+  }
 
   static get styles() {
     return css`
@@ -45,29 +110,16 @@ export class EventApp extends LitElement {
 
       tree-editor,
       tree-logs {
-        width: 50%;
         padding: 1em;
       }
-    `;
-  }
 
-  handlePresetChange() {}
+      tree-editor {
+        min-width: 400px;
+      }
 
-  handleTreeChange() {}
-
-  render() {
-    return html`
-      <div class="container">
-        <tree-editor
-          @presetchange=${(evt: CustomEvent<{ id: string }>) => console.log(evt)}
-          @treechange=${(evt: CustomEvent<{ html: string }>) => console.log(evt)}
-        ></tree-editor>
-        <tree-logs
-          .steps=${this.steps}
-          .activeStep=${this.activeStep}
-          @stepchange=${(evt: CustomEvent<{ step: number }>) => (this.activeStep = evt.detail.step)}
-        ></tree-logs>
-      </div>
+      tree-logs {
+        flex-grow: 1;
+      }
     `;
   }
 }
