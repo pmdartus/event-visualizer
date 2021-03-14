@@ -1,6 +1,11 @@
 {
-    "compilerOptions": {
-        "strict": true,
-        "lib": ["esnext", "dom"]
-    }
+  "compilerOptions": {
+    "strict": true,
+    "target": "ESNext",
+    "lib": ["esnext", "dom"],
+
+    "moduleResolution": "node",
+
+    "experimentalDecorators": true,
+  }
 }

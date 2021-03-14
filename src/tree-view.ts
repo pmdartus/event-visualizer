@@ -1,4 +1,4 @@
-import { getTreeNodeLabel } from "./utils";
+import { getEventTargetLabel } from "./utils/label";
 import { EventDispatchingStep, DomTree, TreeNode } from "./simulator";
 
 import "./tree-view.css";
@@ -228,7 +228,7 @@ function renderGraph(graph: Graph) {
       text.setAttribute("text-anchor", "middle");
 
       text.classList.add("node-label");
-      text.textContent = getTreeNodeLabel(node.treeNode!);
+      text.textContent = getEventTargetLabel(node.treeNode!);
 
       TREE_VIEW.appendChild(text);
     }

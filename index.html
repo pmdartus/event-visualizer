@@ -8,25 +8,7 @@
   </head>
   <body>
     <main>
-      <section class="editor">
-        <select id="select-preset" name="select-preset"></select>
-        <pre><code id="editor-preset"></code></pre>
-      </section>
-
-      <section section="visualizer">
-        <input type="checkbox" name="bubbles" id="bubbles" checked />
-        <label for="bubbles">Bubbles</label>
-
-        <input type="checkbox" name="composed" id="composed" checked />
-        <label for="composed">Composed</label>
-
-        <svg id="tree-view" width="100%" height="600" viewBox="-10 -10 600 600"></svg>
-      </section>
-
-      <section section="logs">
-        <input type="range" id="steps-slider" min="0" max="0" />
-        <ul id="steps-logs"></ul>
-      </section>
+      <event-app></event-app>
     </main>
 
     <script src="./src/main.js" type="module"></script>
