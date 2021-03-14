@@ -1,11 +1,19 @@
 import { LitElement, html, css, property, customElement } from "lit-element";
 
-import PRESETS from "./utils/presets";
-import { buildDomTree, EventDispatchingStep, simulateDispatchEvent } from "./simulator";
-import { loadStateFromSearchParams, saveStateToSearchParams } from "./utils/search-params";
-
 import "./tree-editor";
 import "./tree-logs";
+import "./graph-viewer";
+
+import {
+  buildDomTree,
+  DomTree,
+  EventDispatchingStep,
+  simulateDispatchEvent,
+  TreeNode,
+} from "./lib/simulator";
+
+import PRESETS from "./utils/presets";
+import { loadStateFromSearchParams, saveStateToSearchParams } from "./utils/search-params";
 
 import type { PresetChangeEvent, TreeChangeEvent } from "./tree-editor";
 import type { ChangeStepEvent } from "./tree-logs";
@@ -16,6 +24,8 @@ export class EventApp extends LitElement {
   @property() rawTree: string;
   @property() targetId: string;
 
+  @property() tree!: DomTree;
+  @property() target!: TreeNode;
   @property() steps: EventDispatchingStep[] = [];
   @property() activeStep: number = 0;
 
@@ -36,7 +46,7 @@ export class EventApp extends LitElement {
     this.targetId = targetId;
 
     this.saveState();
-    this.recomputeSteps();
+    this.recomputeEventDispatching();
   }
 
   handlePresetChange(evt: PresetChangeEvent) {
@@ -49,7 +59,7 @@ export class EventApp extends LitElement {
     this.targetId = preset.targetId;
 
     this.saveState();
-    this.recomputeSteps();
+    this.recomputeEventDispatching();
   }
 
   handleTreeChange(evt: TreeChangeEvent) {
@@ -57,22 +67,23 @@ export class EventApp extends LitElement {
     this.rawTree = evt.detail.value;
 
     this.saveState();
-    this.recomputeSteps();
+    this.recomputeEventDispatching();
   }
 
   saveState() {
     saveStateToSearchParams(this.rawTree, this.targetId);
   }
 
-  recomputeSteps() {
-    const tree = buildDomTree(this.rawTree);
+  recomputeEventDispatching() {
+    this.tree = buildDomTree(this.rawTree);
 
-    const target = tree.nodes.find(
+    this.target = this.tree.nodes.find(
       (node) => node instanceof Element && node.getAttribute("id") === this.targetId
     )!;
+
     this.steps = simulateDispatchEvent({
-      tree,
-      target,
+      tree: this.tree,
+      target: this.target,
       eventOptions: {
         bubbles: true,
         composed: true,
@@ -95,6 +106,11 @@ export class EventApp extends LitElement {
           @stepchange=${(evt: ChangeStepEvent) => (this.activeStep = evt.detail.step)}
         ></tree-logs>
       </div>
+      <graph-viewer
+        .tree=${this.tree}
+        .steps=${this.steps}
+        .activeStep=${this.activeStep}
+      ></graph-viewer>
     `;
   }
 

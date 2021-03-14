@@ -1,6 +1,6 @@
 import { LitElement, html, css, property, customElement } from "lit-element";
 
-import { EventDispatchingStep } from "./simulator";
+import { EventDispatchingStep } from "./lib/simulator";
 import { getEventTargetLabel } from "./utils/label";
 
 export type ChangeStepEvent = CustomEvent<{ step: number }>;

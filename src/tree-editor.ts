@@ -42,7 +42,6 @@ export class TreeEditor extends LitElement {
   }
 
   render() {
-    console.log("ici");
     return html`
       <select @change=${this.handlePresetChange}>
         <option disabled ?selected=${this.presetId === null}>Select an example...</option>
