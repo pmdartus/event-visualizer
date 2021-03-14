@@ -34,11 +34,13 @@ export class TreeLogs extends LitElement {
     }
   }
 
-  handleInputChange(evt: Event) {
+  handleSliderChange(evt: Event) {
     const step = (evt.target as HTMLInputElement).valueAsNumber;
 
     this.isPlaying = false;
+
     clearInterval(this._playIntervalHandle);
+    this.dispatchStepChange(step);
   }
 
   handleStepClick(step: number) {
@@ -55,39 +57,72 @@ export class TreeLogs extends LitElement {
   }
 
   render() {
-    const { steps, activeStep, isPlaying: isPlayingSteps } = this;
+    const { steps, activeStep, isPlaying } = this;
 
     return html`
-      <button @click=${this.handlePlayPauseClick} title=${isPlayingSteps ? "Pause" : "Play"}>
-        ${isPlayingSteps ? "⏸" : "▶️"}
-      </button>
+      <section class="player">
+        <button @click=${this.handlePlayPauseClick} title=${isPlaying ? "Pause" : "Play"}>
+          ${isPlaying ? "⏸" : "▶️"}
+        </button>
 
-      <input
-        type="range"
-        min="0"
-        max=${steps.length}
-        .value=${activeStep}
-        @value=${this.handleInputChange}
-      />
+        <input
+          type="range"
+          min="0"
+          max=${steps.length - 1}
+          .value=${activeStep}
+          @input=${this.handleSliderChange}
+        />
+      </section>
 
-      <ul>
-        ${steps.map(
-          (step, index) => html`
-            <li
-              class=${activeStep === index ? "active" : ""}
-              @click=${() => this.handleStepClick(index)}
-            >
-              <strong>Current target:</strong>
-              <code>${getEventTargetLabel(step.currentTarget)}</code> | <strong>Target:</strong>
-              <code>${getEventTargetLabel(step.target)}</code> |
-              <strong>Composed Path:</strong>
-              <code>
-                ${step.composedPath.map((node) => getEventTargetLabel(node)).join(", ")}
-              </code>
-            </li>
-          `
-        )}
-      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Step</th>
+            <th scope="col">Current Target</th>
+            <th scope="col">Target</th>
+            <th scope="col">Composed Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${steps.map(
+            (step, index) => html`
+              <tr
+                class=${activeStep === index ? "active-step" : ""}
+                @click=${() => this.handleStepClick(index)}
+              >
+                <th scope="row">${index + 1}</th>
+                <td>${getEventTargetLabel(step.currentTarget)}</td>
+                <td>${getEventTargetLabel(step.target)}</td>
+                <td>${step.composedPath.map((node) => getEventTargetLabel(node)).join(", ")}</td>
+              </tr>
+            `
+          )}
+        </tbody>
+      </table>
+    `;
+  }
+
+  static get styles() {
+    return css`
+      :host {
+        display: block;
+      }
+
+      .player {
+        display: flex;
+      }
+
+      .player input {
+        flex-grow: 1;
+      }
+
+      table {
+        width: 100%;
+      }
+
+      tr.active-step {
+        background: #c7c7c7;
+      }
     `;
   }
 }

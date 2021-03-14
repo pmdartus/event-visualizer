@@ -1,11 +1,19 @@
 {
   "compilerOptions": {
-    "strict": true,
+    // Project options
     "target": "ESNext",
     "lib": ["esnext", "dom"],
+    
+    // Type check
+    "strict": true,
 
+    // Linter checks
+    "noUnusedLocals": true,
+
+    // Resolution
     "moduleResolution": "node",
 
+    // Experimental
     "experimentalDecorators": true,
   }
 }

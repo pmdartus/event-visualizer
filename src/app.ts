@@ -1,8 +1,9 @@
 import { LitElement, html, css, property, customElement } from "lit-element";
 
+import { buildDomTree, simulateDispatchEvent } from "./simulator";
+
 import "./tree-editor";
 import "./tree-logs";
-import { buildDomTree, simulateDispatchEvent } from "./simulator";
 
 const tree = buildDomTree(`
 <div id="a">
@@ -35,7 +36,17 @@ export class EventApp extends LitElement {
   static get styles() {
     return css`
       :host {
+        display: block;
+      }
+
+      .container {
         display: flex;
+      }
+
+      tree-editor,
+      tree-logs {
+        width: 50%;
+        padding: 1em;
       }
     `;
   }
@@ -45,17 +56,18 @@ export class EventApp extends LitElement {
   handleTreeChange() {}
 
   render() {
-    console.log(this.activeStep);
     return html`
-      <tree-editor
-        @presetchange=${(evt: CustomEvent<{ id: string }>) => console.log(evt)}
-        @treechange=${(evt: CustomEvent<{ html: string }>) => console.log(evt)}
-      ></tree-editor>
-      <tree-logs
-        .steps=${this.steps}
-        .activeStep=${this.activeStep}
-        @stepchange=${(evt: CustomEvent<{ step: number }>) => (this.activeStep = evt.detail.step)}
-      ></tree-logs>
+      <div class="container">
+        <tree-editor
+          @presetchange=${(evt: CustomEvent<{ id: string }>) => console.log(evt)}
+          @treechange=${(evt: CustomEvent<{ html: string }>) => console.log(evt)}
+        ></tree-editor>
+        <tree-logs
+          .steps=${this.steps}
+          .activeStep=${this.activeStep}
+          @stepchange=${(evt: CustomEvent<{ step: number }>) => (this.activeStep = evt.detail.step)}
+        ></tree-logs>
+      </div>
     `;
   }
 }
