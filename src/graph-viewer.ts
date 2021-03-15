@@ -28,10 +28,8 @@ export class GraphViewer extends LitElement {
       this.graphRender?.setTree(this.tree);
     }
 
-    if (props.has("step") || props.has("activeStep")) {
-      const step = this.steps[this.activeStep];
-      this.graphRender?.setStep(step);
-    }
+    const step = this.steps[this.activeStep];
+    this.graphRender?.setStep(step);
   }
 
   static get styles() {

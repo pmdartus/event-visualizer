@@ -16,7 +16,7 @@ import PRESETS from "./utils/presets";
 import { loadStateFromSearchParams, saveStateToSearchParams } from "./utils/search-params";
 
 import type { PresetChangeEvent, TreeChangeEvent } from "./tree-editor";
-import type { ChangeStepEvent } from "./tree-logs";
+import type { StepChangeEvent, EventConfig, EventConfigChangeEvent } from "./tree-logs";
 
 @customElement("event-app")
 export class EventApp extends LitElement {
@@ -26,6 +26,7 @@ export class EventApp extends LitElement {
 
   @property() tree!: DomTree;
   @property() target!: TreeNode;
+  @property() eventConfig: EventConfig = { bubbles: true, composed: true };
   @property() steps: EventDispatchingStep[] = [];
   @property() activeStep: number = 0;
 
@@ -70,6 +71,13 @@ export class EventApp extends LitElement {
     this.recomputeEventDispatching();
   }
 
+  handleEventConfigChange(evt: EventConfigChangeEvent) {
+    this.eventConfig = evt.detail;
+
+    this.saveState();
+    this.recomputeEventDispatching();
+  }
+
   saveState() {
     saveStateToSearchParams(this.rawTree, this.targetId);
   }
@@ -81,13 +89,11 @@ export class EventApp extends LitElement {
       (node) => node instanceof Element && node.getAttribute("id") === this.targetId
     )!;
 
+    this.activeStep = 0;
     this.steps = simulateDispatchEvent({
       tree: this.tree,
       target: this.target,
-      eventOptions: {
-        bubbles: true,
-        composed: true,
-      },
+      eventConfig: this.eventConfig,
     });
   }
 
@@ -103,7 +109,9 @@ export class EventApp extends LitElement {
         <tree-logs
           .steps=${this.steps}
           .activeStep=${this.activeStep}
-          @stepchange=${(evt: ChangeStepEvent) => (this.activeStep = evt.detail.step)}
+          .eventConfig=${this.eventConfig}
+          @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
+          @eventconfigchange=${this.handleEventConfigChange}
         ></tree-logs>
       </div>
       <graph-viewer

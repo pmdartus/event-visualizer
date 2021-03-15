@@ -55,9 +55,9 @@ export function buildDomTree(html: string): DomTree {
 export function simulateDispatchEvent(config: {
   tree: DomTree;
   target: TreeNode;
-  eventOptions: EventInit;
+  eventConfig: EventInit;
 }): EventDispatchingStep[] {
-  const { tree, target, eventOptions } = config;
+  const { tree, target, eventConfig } = config;
   const steps: EventDispatchingStep[] = [];
 
   function handler(event: Event) {
@@ -72,7 +72,7 @@ export function simulateDispatchEvent(config: {
     node.addEventListener(EVENT_NAME, handler);
   }
 
-  const event = new CustomEvent(EVENT_NAME, eventOptions);
+  const event = new CustomEvent(EVENT_NAME, eventConfig);
   target.dispatchEvent(event);
 
   for (const node of tree.nodes) {

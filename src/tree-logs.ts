@@ -4,7 +4,13 @@ import { classMap } from "lit-html/directives/class-map";
 import { EventDispatchingStep } from "./lib/simulator";
 import { getEventTargetLabel } from "./utils/label";
 
-export type ChangeStepEvent = CustomEvent<{ step: number }>;
+export interface EventConfig {
+  bubbles: boolean;
+  composed: boolean;
+}
+
+export type StepChangeEvent = CustomEvent<{ step: number }>;
+export type EventConfigChangeEvent = CustomEvent<EventConfig>;
 
 @customElement("tree-logs")
 export class TreeLogs extends LitElement {
@@ -14,20 +20,35 @@ export class TreeLogs extends LitElement {
   @property()
   activeStep: number = 0;
 
+  @property()
+  eventConfig: EventConfig = { bubbles: true, composed: true };
+
   dispatchStepChange(step: number) {
-    const changeStepEvent: ChangeStepEvent = new CustomEvent("stepchange", {
+    const changeStepEvent: StepChangeEvent = new CustomEvent("stepchange", {
       detail: { step },
     });
 
     this.dispatchEvent(changeStepEvent);
   }
 
+  handleEventConfigChange() {
+    const eventConfigChangeEvent: EventConfigChangeEvent = new CustomEvent("eventconfigchange", {
+      detail: {
+        bubbles: (this.shadowRoot!.querySelector("#bubbles") as HTMLInputElement).checked!,
+        composed: (this.shadowRoot!.querySelector("#composed") as HTMLInputElement).checked!,
+      },
+    });
+
+    this.dispatchEvent(eventConfigChangeEvent);
+  }
+
   render() {
-    const { steps, activeStep } = this;
+    const { steps, activeStep, eventConfig } = this;
 
     return html`
-      <section class="player">
+      <section>
         <input
+          title="Active step"
           type="range"
           min="0"
           max=${steps.length - 1}
@@ -35,6 +56,22 @@ export class TreeLogs extends LitElement {
           @input=${(evt: Event) =>
             this.dispatchStepChange((evt.target as HTMLInputElement).valueAsNumber)}
         />
+
+        <input
+          id="bubbles"
+          type="checkbox"
+          .checked=${eventConfig.bubbles}
+          @change=${this.handleEventConfigChange}
+        />
+        <label for="bubbles"><code>bubbles</code></label>
+
+        <input
+          id="composed"
+          type="checkbox"
+          .checked=${eventConfig.composed}
+          @change=${this.handleEventConfigChange}
+        />
+        <label for="composed"><code>composed</code></label>
       </section>
 
       <table>
@@ -84,12 +121,8 @@ export class TreeLogs extends LitElement {
         display: block;
       }
 
-      .player {
-        display: flex;
-      }
-
-      .player input {
-        flex-grow: 1;
+      input[type="range"] {
+        width: 100%;
       }
 
       table {
