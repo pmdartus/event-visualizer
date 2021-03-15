@@ -31,6 +31,18 @@ const NESTED_SHADOW_TREE = `
 </div>
 `.trim();
 
+const CLOSED_NESTED_SHADOW_TREE = `
+<div id="a">
+  <template shadow-root mode="closed">
+    <div id="b">
+      <template shadow-root mode="closed">
+        <div id="c"></div>
+      </template>
+    </div>
+  </template>
+</div>
+`.trim();
+
 const SLOTTED_CONTENT = `
 <div id="a">
   <template shadow-root mode="open">
@@ -59,6 +71,12 @@ const PRESETS: Preset[] = [
     id: "nested-shadow-tree",
     label: "Shadow trees nested into one another",
     rawTree: NESTED_SHADOW_TREE,
+    targetId: "c",
+  },
+  {
+    id: "closed-nested-shadow-tree",
+    label: "Closed shadow trees nested into one another",
+    rawTree: CLOSED_NESTED_SHADOW_TREE,
     targetId: "c",
   },
   {
