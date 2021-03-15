@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run build step
+      run: npm run build
+      env:
+        NODE_ENV: production
+
+    - name: Save build output
+      uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path: build/
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Download a build output
+      uses: actions/download-artifact@v2
+      with:
+        name: build
+        path: build/
+
+    - name: Deploy to GH pages
+      if: 
+      uses: crazy-max/ghaction-github-pages@v2
+      with:
+        build_dir: build
+        target_branch: gh-pages
+        jekyll: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
