@@ -1,7 +1,11 @@
-import { LitElement, html, css, property, customElement } from "lit-element";
-import { debounce } from "./utils/debounce";
+import { LitElement, html, css, property, customElement, PropertyValues } from "lit-element";
+import type { EditorView } from "@codemirror/view";
+
+import "./utils/code-mirror";
 
 import PRESETS from "./utils/presets";
+import { debounce } from "./utils/debounce";
+import { createEditor, replaceEditorContent } from "./utils/code-mirror";
 
 export type PresetChangeEvent = CustomEvent<{ id: string }>;
 export type TreeChangeEvent = CustomEvent<{ value: string }>;
@@ -15,6 +19,8 @@ export class TreeEditor extends LitElement {
 
   @property()
   value = "";
+
+  private editorView!: EditorView;
 
   debouncedInputChange = debounce(
     (value: string) => this.dispatchTreeChange(value),
@@ -55,12 +61,27 @@ export class TreeEditor extends LitElement {
         )}
       </select>
 
-      <textarea
-        .value=${this.value}
-        @input=${(evt: Event) =>
-          this.debouncedInputChange((evt.target as HTMLTextAreaElement).value)}
-      ></textarea>
+      <div></div>
     `;
+  }
+
+  firstUpdated() {
+    this.editorView = createEditor({
+      root: this.shadowRoot!,
+      parent: this.shadowRoot?.querySelector("div")!,
+      onInput: (value) => {
+        this.dispatchTreeChange(value);
+      },
+    });
+  }
+
+  updated(props: PropertyValues) {
+    if (props.has("value")) {
+      replaceEditorContent({
+        content: this.value,
+        view: this.editorView,
+      });
+    }
   }
 
   static get styles() {
@@ -72,14 +93,6 @@ export class TreeEditor extends LitElement {
       select {
         width: 100%;
         margin-bottom: 1rem;
-      }
-
-      textarea {
-        display: block;
-        background: #f5f5f5;
-        width: 100%;
-        min-height: 300px;
-        resize: none;
       }
     `;
   }
