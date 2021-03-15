@@ -2,7 +2,6 @@
   "name": "eventing-visualizer",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "start": "snowpack dev",
     "prebuild": "tsc --noEmit",
