@@ -1,7 +1,5 @@
-import { getTreeNodeLabel } from "./utils";
-import { EventDispatchingStep, DomTree, TreeNode } from "./simulator";
-
-import "./tree-view.css";
+import { DomTree, EventDispatchingStep, TreeNode } from "./simulator";
+import { getEventTargetLabel } from "../utils/label";
 
 // https://blog.disy.net/sugiyama-method/
 // http://www.graphviz.org/Documentation/TSE93.pdf
@@ -47,8 +45,6 @@ type Layer = GraphNodeId[];
 const NODE_SIZE = 80;
 const HORIZONTAL_SPACING = 50;
 const VERTICAL_SPACING = 50;
-
-const TREE_VIEW: SVGElement = document.querySelector("#tree-view")!;
 
 function createSvgElement<K extends keyof SVGElementTagNameMap>(
   tagName: K
@@ -189,8 +185,6 @@ function fillLayers(graph: Graph) {
 function layoutGraphNodes(graph: Graph) {
   const { nodes, layers } = graph;
 
-  TREE_VIEW.innerHTML = "";
-
   for (const node of nodes) {
     const layerIndex = layers.findIndex((layer) => layer.includes(node.id));
     const indexInLayer = layers[layerIndex].indexOf(node.id);
@@ -200,7 +194,7 @@ function layoutGraphNodes(graph: Graph) {
   }
 }
 
-function renderGraph(graph: Graph) {
+function renderGraph(graph: Graph, root: SVGElement) {
   const { nodes, edges } = graph;
 
   for (const node of nodes) {
@@ -219,7 +213,7 @@ function renderGraph(graph: Graph) {
         rect.classList.add("node__shadow-root");
       }
 
-      TREE_VIEW.appendChild(rect);
+      root.appendChild(rect);
 
       const text = createSvgElement("text");
       text.setAttribute("x", String(node.x + NODE_SIZE / 2));
@@ -228,9 +222,9 @@ function renderGraph(graph: Graph) {
       text.setAttribute("text-anchor", "middle");
 
       text.classList.add("node-label");
-      text.textContent = getTreeNodeLabel(node.treeNode!);
+      text.textContent = getEventTargetLabel(node.treeNode!);
 
-      TREE_VIEW.appendChild(text);
+      root.appendChild(text);
     }
   }
 
@@ -261,26 +255,38 @@ function renderGraph(graph: Graph) {
       line.classList.add("connection__assigned-element");
     }
 
-    TREE_VIEW.appendChild(line);
+    root.appendChild(line);
   }
 }
 
-export function init() {
-  let graph: Graph;
+export class GraphRenderer {
+  private root: SVGElement;
+  private graph: Graph = {
+    nodes: [],
+    edges: [],
+    layers: [],
+  };
 
-  function resetTreeView(tree: DomTree) {
-    graph = graphFromDomTree(tree);
-
-    assignGraphNodeToLayers(graph);
-    fillLayers(graph);
-    layoutGraphNodes(graph);
-    renderGraph(graph);
+  constructor({ root }: { root: SVGElement }) {
+    this.root = root;
   }
 
-  function setEventDispatchingStep(step: EventDispatchingStep) {
+  setTree(tree: DomTree) {
+    this.root.innerHTML = "";
+
+    this.graph = graphFromDomTree(tree);
+
+    assignGraphNodeToLayers(this.graph);
+    fillLayers(this.graph);
+    layoutGraphNodes(this.graph);
+    renderGraph(this.graph, this.root);
+  }
+
+  setStep(step: EventDispatchingStep) {
+    const { root, graph } = this;
     const { target, currentTarget, composedPath } = step;
 
-    for (const svgNode of Array.from(TREE_VIEW.querySelectorAll(".node"))) {
+    for (const svgNode of Array.from(root.querySelectorAll(".node"))) {
       const graphId = svgNode.getAttribute("data-graph-id");
       const graphNode = graph.nodes.find((node) => node.id === graphId)!;
 
@@ -303,9 +309,4 @@ export function init() {
       }
     }
   }
-
-  return {
-    resetTreeView,
-    setEventDispatchingStep,
-  };
 }
