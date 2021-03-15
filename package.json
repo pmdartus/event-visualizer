@@ -7,7 +7,7 @@
     "start": "snowpack dev",
     "prebuild": "tsc --noEmit",
     "build": "snowpack build",
-    "format": "prettier --write './**/*.{js,ts,html,css,md}'"
+    "format": "prettier --write './**/*.{js,ts,html,css,md,yml}'"
   },
   "keywords": [],
   "author": "",
@@ -28,7 +28,7 @@
     }
   },
   "lint-staged": {
-    "*.{js,ts,html,css,md}": "prettier --write"
+    "*.{js,ts,html,css,md,yml}": "prettier --write"
   },
   "prettier": {
     "printWidth": 100
