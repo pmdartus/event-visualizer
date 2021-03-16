@@ -2,19 +2,19 @@ export interface Preset {
   id: string;
   label: string;
   rawTree: string;
-  targetId: string;
 }
 
 const SIMPLE_TREE = `
 <div id="a">
-  <div id="b"></div>
+  <div id="b" target></div>
+  <div id="c"></div>
 </div>
 `.trim();
 
 const SHADOW_TREE = `
 <div id="a">
   <template shadow-root mode="open">
-    <div id="b"></div>
+    <div id="b" target></div>
   </template>
 </div>
 `.trim();
@@ -24,7 +24,7 @@ const NESTED_SHADOW_TREE = `
   <template shadow-root mode="open">
     <div id="b">
       <template shadow-root mode="open">
-        <div id="c"></div>
+        <div id="c" target></div>
       </template>
     </div>
   </template>
@@ -36,7 +36,7 @@ const CLOSED_NESTED_SHADOW_TREE = `
   <template shadow-root mode="closed">
     <div id="b">
       <template shadow-root mode="closed">
-        <div id="c"></div>
+        <div id="c" target></div>
       </template>
     </div>
   </template>
@@ -50,7 +50,7 @@ const SLOTTED_CONTENT = `
       <slot></slot>
     </div>
   </template>
-  <div id="c"></div>
+  <div id="c" target></div>
 </div>
 `.trim();
 
@@ -59,31 +59,26 @@ const PRESETS: Preset[] = [
     id: "simple-tree",
     label: "A simple tree",
     rawTree: SIMPLE_TREE,
-    targetId: "b",
   },
   {
     id: "shadow-tree",
     label: "A single shadow tree",
     rawTree: SHADOW_TREE,
-    targetId: "b",
   },
   {
     id: "nested-shadow-tree",
     label: "Shadow trees nested into one another",
     rawTree: NESTED_SHADOW_TREE,
-    targetId: "c",
   },
   {
     id: "closed-nested-shadow-tree",
     label: "Closed shadow trees nested into one another",
     rawTree: CLOSED_NESTED_SHADOW_TREE,
-    targetId: "c",
   },
   {
     id: "slotted-content",
     label: "A single shadow tree with slotted content",
     rawTree: SLOTTED_CONTENT,
-    targetId: "c",
   },
 ];
 

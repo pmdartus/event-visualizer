@@ -9,103 +9,106 @@ import {
   DomTree,
   EventDispatchingStep,
   simulateDispatchEvent,
-  TreeNode,
 } from "./lib/simulator";
 
 import PRESETS from "./utils/presets";
 import { loadStateFromSearchParams, saveStateToSearchParams } from "./utils/search-params";
 
-import type { PresetChangeEvent, TreeChangeEvent } from "./tree-editor";
+import type { ChangeEvent as EditorChangeEvent } from "./tree-editor";
 import type { StepChangeEvent, EventConfig, EventConfigChangeEvent } from "./tree-logs";
 
 @customElement("event-app")
 export class EventApp extends LitElement {
-  @property() presetId: string | null = null;
+  @property() presetId: string | null;
   @property() rawTree: string;
-  @property() targetId: string;
+  @property() eventConfig: EventConfig;
 
-  @property() tree!: DomTree;
-  @property() target!: TreeNode;
-  @property() eventConfig: EventConfig = { bubbles: true, composed: true };
+  @property() tree?: DomTree;
   @property() steps: EventDispatchingStep[] = [];
   @property() activeStep: number = 0;
+  @property() errorMessage: string | null = null;
 
   constructor() {
     super();
 
-    let { rawTree, targetId } = loadStateFromSearchParams();
+    const { rawTree, eventConfig } = loadStateFromSearchParams();
 
-    if (rawTree === null || targetId === null) {
+    if (rawTree) {
+      this.rawTree = rawTree;
+      this.presetId = null;
+    } else {
       const preset = PRESETS[0];
-
+      this.rawTree = preset.rawTree;
       this.presetId = preset.id;
-      rawTree = preset.rawTree;
-      targetId = preset.targetId;
     }
+    this.eventConfig = eventConfig;
 
-    this.rawTree = rawTree;
-    this.targetId = targetId;
-
-    this.saveState();
     this.recomputeEventDispatching();
   }
 
-  handlePresetChange(evt: PresetChangeEvent) {
-    const { id: presetId } = evt.detail;
-
-    const preset = PRESETS.find((preset) => preset.id === presetId)!;
-
-    this.presetId = presetId;
-    this.rawTree = preset.rawTree;
-    this.targetId = preset.targetId;
-
-    this.saveState();
-    this.recomputeEventDispatching();
-  }
-
-  handleTreeChange(evt: TreeChangeEvent) {
-    this.presetId = null;
+  handleEditorChange(evt: EditorChangeEvent) {
     this.rawTree = evt.detail.value;
-
-    this.saveState();
     this.recomputeEventDispatching();
   }
 
   handleEventConfigChange(evt: EventConfigChangeEvent) {
-    this.eventConfig = evt.detail;
-
-    this.saveState();
+    this.eventConfig = evt.detail.config;
     this.recomputeEventDispatching();
   }
 
-  saveState() {
-    saveStateToSearchParams(this.rawTree, this.targetId);
+  handlePresetChange(evt: Event) {
+    const presetId = (evt.target as HTMLSelectElement).value;
+
+    this.presetId = presetId;
+    this.rawTree = PRESETS.find((preset) => preset.id === presetId)!.rawTree;
+
+    this.recomputeEventDispatching();
   }
 
   recomputeEventDispatching() {
-    this.tree = buildDomTree(this.rawTree);
+    const { rawTree, eventConfig } = this;
 
-    this.target = this.tree.nodes.find(
-      (node) => node instanceof Element && node.getAttribute("id") === this.targetId
-    )!;
+    try {
+      const tree = buildDomTree(rawTree);
+      const steps = simulateDispatchEvent({
+        tree,
+        eventConfig,
+      });
 
-    this.activeStep = 0;
-    this.steps = simulateDispatchEvent({
-      tree: this.tree,
-      target: this.target,
-      eventConfig: this.eventConfig,
-    });
+      this.tree = tree;
+      this.steps = steps;
+      this.activeStep = 0;
+      this.errorMessage = null;
+
+      saveStateToSearchParams({
+        rawTree,
+        eventConfig,
+      });
+    } catch (error: unknown) {
+      this.errorMessage = (error as Error).message;
+      console.error(error);
+    }
   }
 
   render() {
     return html`
+      <select @change=${this.handlePresetChange}>
+        <option disabled .selected=${this.presetId === null}>Select an example...</option>
+        ${PRESETS.map(
+          (preset) =>
+            html`
+              <option value=${preset.id} .selected=${preset.id === this.presetId}>
+                ${preset.label}
+              </option>
+            `
+        )}
+      </select>
+
       <div class="container">
-        <tree-editor
-          .presetId=${this.presetId}
-          .value=${this.rawTree}
-          @presetchange=${this.handlePresetChange}
-          @treechange=${this.handleTreeChange}
-        ></tree-editor>
+        <tree-editor .value=${this.rawTree} @change=${this.handleEditorChange}></tree-editor>
+
+        ${this.errorMessage && html`<div class="error-message">${this.errorMessage}</div>`}
+
         <tree-logs
           .steps=${this.steps}
           .activeStep=${this.activeStep}

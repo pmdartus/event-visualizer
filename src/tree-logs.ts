@@ -10,7 +10,7 @@ export interface EventConfig {
 }
 
 export type StepChangeEvent = CustomEvent<{ step: number }>;
-export type EventConfigChangeEvent = CustomEvent<EventConfig>;
+export type EventConfigChangeEvent = CustomEvent<{ config: EventConfig }>;
 
 @customElement("tree-logs")
 export class TreeLogs extends LitElement {
@@ -34,8 +34,10 @@ export class TreeLogs extends LitElement {
   handleEventConfigChange() {
     const eventConfigChangeEvent: EventConfigChangeEvent = new CustomEvent("eventconfigchange", {
       detail: {
-        bubbles: (this.shadowRoot!.querySelector("#bubbles") as HTMLInputElement).checked!,
-        composed: (this.shadowRoot!.querySelector("#composed") as HTMLInputElement).checked!,
+        config: {
+          bubbles: (this.shadowRoot!.querySelector("#bubbles") as HTMLInputElement).checked!,
+          composed: (this.shadowRoot!.querySelector("#composed") as HTMLInputElement).checked!,
+        },
       },
     });
 

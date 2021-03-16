@@ -8,6 +8,8 @@ import { indentOnInput } from "@codemirror/language";
 import { EditorState } from "@codemirror/state";
 import { EditorView, highlightActiveLine, keymap } from "@codemirror/view";
 
+export { EditorView };
+
 /**
  * Wrapper utility around CodeMirror v6.
  * More details: https://codemirror.net/6/docs/ref/
@@ -59,12 +61,16 @@ export function createEditor({
 }
 
 export function replaceEditorContent({ content, view }: { content: string; view: EditorView }) {
-  const docLength = view.state.doc.length;
-  view.dispatch({
-    changes: {
-      from: 0,
-      to: docLength,
-      insert: content,
-    },
-  });
+  const { doc } = view.state;
+
+  // Only replace content if the current content is different than the old one.
+  if (doc.toString() !== content) {
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: doc.length,
+        insert: content,
+      },
+    });
+  }
 }
