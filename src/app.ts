@@ -23,7 +23,7 @@ export class EventApp extends LitElement {
   @property() rawTree: string;
   @property() eventConfig: EventConfig;
 
-  @property() tree?: DomTree;
+  @property() tree: DomTree | null = null;
   @property() steps: EventDispatchingStep[] = [];
   @property() activeStep: number = 0;
   @property() errorMessage: string | null = null;
@@ -79,15 +79,19 @@ export class EventApp extends LitElement {
       this.steps = steps;
       this.activeStep = 0;
       this.errorMessage = null;
-
-      saveStateToSearchParams({
-        rawTree,
-        eventConfig,
-      });
     } catch (error: unknown) {
-      this.errorMessage = (error as Error).message;
       console.error(error);
+
+      this.tree = null;
+      this.steps = [];
+      this.activeStep = 0;
+      this.errorMessage = (error as Error).message;
     }
+
+    saveStateToSearchParams({
+      rawTree,
+      eventConfig,
+    });
   }
 
   render() {

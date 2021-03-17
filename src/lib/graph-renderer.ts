@@ -1,3 +1,5 @@
+import rough from "roughjs";
+
 import { DomTree, EventDispatchingStep, TreeNode } from "./simulator";
 import { getEventTargetLabel } from "../utils/label";
 
@@ -34,17 +36,51 @@ interface GraphEdge {
   to: GraphNodeId;
 }
 
-interface Graph {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  layers: Layer[];
-}
-
 type Layer = GraphNodeId[];
 
 const NODE_SIZE = 80;
 const HORIZONTAL_SPACING = 50;
 const VERTICAL_SPACING = 50;
+
+const CURVE_TIGHTNESS = 0.8;
+
+class Graph {
+  nodes: GraphNode[] = [];
+  edges: GraphEdge[] = [];
+  layers: Layer[] = [];
+
+  createNode(config: Omit<GraphNode, "x" | "y">): GraphNode {
+    const node = {
+      ...config,
+      x: 0,
+      y: 0,
+    };
+
+    this.nodes.push(node);
+    return node;
+  }
+
+  createEdge(config: GraphEdge): GraphEdge {
+    this.edges.push(config);
+    return config;
+  }
+
+  getNode(id: GraphNodeId): GraphNode | undefined {
+    return this.nodes.find((node) => node.id === id);
+  }
+
+  getOutgoingEdges(id: GraphNodeId): GraphEdge[] {
+    return this.edges.filter((edge) => edge.from === id);
+  }
+
+  getIncomingEdges(id: GraphNodeId): GraphEdge[] {
+    return this.edges.filter((edge) => edge.to === id);
+  }
+
+  getLayer(id: GraphNodeId): number {
+    return this.layers.findIndex((layer) => layer.includes(id));
+  }
+}
 
 function createSvgElement<K extends keyof SVGElementTagNameMap>(
   tagName: K
@@ -52,17 +88,8 @@ function createSvgElement<K extends keyof SVGElementTagNameMap>(
   return document.createElementNS("http://www.w3.org/2000/svg", tagName);
 }
 
-function createGraphNode(config: Omit<GraphNode, "x" | "y">): GraphNode {
-  return {
-    ...config,
-    x: 0,
-    y: 0,
-  };
-}
-
 function graphFromDomTree(tree: DomTree): Graph {
-  const graphNodes: GraphNode[] = [];
-  const graphEdges: GraphEdge[] = [];
+  const graph = new Graph();
 
   const treeNodeToId: Map<TreeNode, string> = new Map();
 
@@ -73,13 +100,11 @@ function graphFromDomTree(tree: DomTree): Graph {
     const type = treeNode instanceof Element ? NodeType.Element : NodeType.ShadowRoot;
 
     treeNodeToId.set(treeNode, id);
-    graphNodes.push(
-      createGraphNode({
-        id,
-        type,
-        treeNode,
-      })
-    );
+    graph.createNode({
+      id,
+      type,
+      treeNode,
+    });
   }
 
   for (const treeNode of tree.nodes) {
@@ -88,7 +113,7 @@ function graphFromDomTree(tree: DomTree): Graph {
     for (const childTreeNode of Array.from(treeNode.children)) {
       const childId = treeNodeToId.get(childTreeNode)!;
 
-      graphEdges.push({
+      graph.createEdge({
         from: id,
         to: childId,
         type: EdgeType.Child,
@@ -99,7 +124,7 @@ function graphFromDomTree(tree: DomTree): Graph {
       for (const assignedElement of treeNode.assignedElements()) {
         const assignedElementId = treeNodeToId.get(assignedElement)!;
 
-        graphEdges.push({
+        graph.createEdge({
           from: id,
           to: assignedElementId,
           type: EdgeType.AssignedElement,
@@ -110,7 +135,7 @@ function graphFromDomTree(tree: DomTree): Graph {
     if (treeNode instanceof ShadowRoot) {
       const hostElementId = treeNodeToId.get(treeNode.host)!;
 
-      graphEdges.push({
+      graph.createEdge({
         from: hostElementId,
         to: id,
         type: EdgeType.ShadowRoot,
@@ -118,11 +143,7 @@ function graphFromDomTree(tree: DomTree): Graph {
     }
   }
 
-  return {
-    nodes: graphNodes,
-    edges: graphEdges,
-    layers: [],
-  };
+  return graph;
 }
 
 function assignGraphNodeToLayers(graph: Graph) {
@@ -146,31 +167,27 @@ function assignGraphNodeToLayers(graph: Graph) {
 }
 
 function fillLayers(graph: Graph) {
-  const { nodes, edges, layers } = graph;
-
   let currentId = 0;
 
-  for (let i = 0; i < layers.length - 1; i++) {
-    const layer = layers[i];
-    const nextLayer = layers[i + 1];
+  for (let i = 0; i < graph.layers.length - 1; i++) {
+    const layer = graph.layers[i];
+    const nextLayer = graph.layers[i + 1];
 
     for (const nodeId of layer) {
-      const outgoingEdges = edges.filter((edge) => edge.from === nodeId);
+      const outgoingEdges = graph.getOutgoingEdges(nodeId);
 
       for (const outgoingEdge of outgoingEdges) {
         if (!nextLayer.includes(outgoingEdge.to)) {
           const virtualId = `#${currentId++}`;
 
-          nodes.push(
-            createGraphNode({
-              id: virtualId,
-              type: NodeType.Virtual,
-              treeNode: null,
-            })
-          );
+          graph.createNode({
+            id: virtualId,
+            type: NodeType.Virtual,
+            treeNode: null,
+          });
           nextLayer.push(virtualId);
 
-          edges.push({
+          graph.createEdge({
             from: virtualId,
             to: outgoingEdge.to,
             type: outgoingEdge.type,
@@ -182,28 +199,63 @@ function fillLayers(graph: Graph) {
   }
 }
 
-function layoutGraphNodes(graph: Graph) {
+function updateNodeCoordinates(graph: Graph) {
   const { nodes, layers } = graph;
 
   for (const node of nodes) {
-    const layerIndex = layers.findIndex((layer) => layer.includes(node.id));
+    const layerIndex = graph.getLayer(node.id);
     const indexInLayer = layers[layerIndex].indexOf(node.id);
 
     node.x = (NODE_SIZE + HORIZONTAL_SPACING) * indexInLayer;
     node.y = (NODE_SIZE + VERTICAL_SPACING) * layerIndex;
   }
+
+  for (let layerIndex = 0; layerIndex < graph.layers.length; layerIndex += 2) {
+    const layer = graph.layers[layerIndex];
+    for (const nodeId of layer) {
+      const node = graph.getNode(nodeId)!;
+      const children = [
+        ...graph.getIncomingEdges(nodeId).map((edge) => graph.getNode(edge.from)!),
+        ...graph.getOutgoingEdges(nodeId).map((edge) => graph.getNode(edge.to)!),
+      ];
+
+      const xMean = children.reduce((acc, child) => acc + child.x, 0) / children.length;
+      node.x = xMean;
+    }
+  }
+  // for (const layer of layers) {
+  // }
+
+  // for (const layer of layers.reverse()) {
+  //   for (const nodeId of layer) {
+  //     const node = graph.getNode(nodeId)!;
+  //     const children = [
+  //       ...graph.getIncomingEdges(nodeId).map((edge) => graph.getNode(edge.from)!),
+  //       ...graph.getOutgoingEdges(nodeId).map((edge) => graph.getNode(edge.to)!),
+  //     ];
+
+  //     const xMean = children.reduce((acc, child) => acc + child.x, 0) / children.length;
+  //     node.x = xMean;
+  //   }
+  // }
+
+  console.log(nodes);
 }
 
-function renderGraph(graph: Graph, root: SVGElement) {
+function layoutGraph(graph: Graph) {
+  assignGraphNodeToLayers(graph);
+  fillLayers(graph);
+  updateNodeCoordinates(graph);
+}
+
+function renderGraph(graph: Graph, root: SVGSVGElement) {
   const { nodes, edges } = graph;
+
+  const rc = rough.svg(root);
 
   for (const node of nodes) {
     if (node.type !== NodeType.Virtual) {
-      const rect = createSvgElement("rect");
-      rect.setAttribute("width", String(NODE_SIZE));
-      rect.setAttribute("height", String(NODE_SIZE));
-      rect.setAttribute("x", String(node.x));
-      rect.setAttribute("y", String(node.y));
+      const rect = rc.rectangle(node.x, node.y, NODE_SIZE, NODE_SIZE);
       rect.setAttribute("data-graph-id", node.id);
 
       rect.classList.add("node");
@@ -229,45 +281,57 @@ function renderGraph(graph: Graph, root: SVGElement) {
   }
 
   for (const edge of edges) {
-    const fromNode = nodes.find((node) => node.id === edge.from)!;
-    const toNode = nodes.find((node) => node.id === edge.to)!;
+    const fromNode = graph.getNode(edge.from)!;
+    const toNode = graph.getNode(edge.to)!;
 
-    const line = createSvgElement("line");
-    line.setAttribute("x1", String(fromNode.x + NODE_SIZE / 2));
-    line.setAttribute(
-      "y1",
-      String(
-        fromNode.type === NodeType.Virtual ? fromNode.y + NODE_SIZE / 2 : fromNode.y + NODE_SIZE
-      )
-    );
-    line.setAttribute("x2", String(toNode.x + NODE_SIZE / 2));
-    line.setAttribute(
-      "y2",
-      String(toNode.type === NodeType.Virtual ? toNode.y + NODE_SIZE / 2 : toNode.y)
-    );
+    let line: SVGElement | undefined;
+    if (fromNode.type !== NodeType.Virtual && toNode.type !== NodeType.Virtual) {
+      line = rc.line(
+        fromNode.x + NODE_SIZE / 2,
+        fromNode.y + NODE_SIZE,
+        toNode.x + NODE_SIZE / 2,
+        toNode.y
+      );
+    } else if (fromNode.type !== NodeType.Virtual) {
+      const points: [number, number][] = [];
 
-    line.classList.add("connection");
-    if (edge.type === EdgeType.Child) {
-      line.classList.add("connection__child");
-    } else if (edge.type === EdgeType.ShadowRoot) {
-      line.classList.add("connection__shadow-root");
-    } else if (edge.type === EdgeType.AssignedElement) {
-      line.classList.add("connection__assigned-element");
+      points.push([fromNode.x + NODE_SIZE / 2, fromNode.y + NODE_SIZE]);
+
+      let currentToNode = toNode;
+      while (currentToNode.type === NodeType.Virtual) {
+        points.push([currentToNode.x + NODE_SIZE / 2, currentToNode.y + NODE_SIZE / 2]);
+
+        const followingEdge = graph.getOutgoingEdges(currentToNode.id)[0];
+        currentToNode = graph.getNode(followingEdge.to)!;
+      }
+
+      points.push([currentToNode.x + NODE_SIZE / 2, currentToNode.y]);
+
+      line = rc.curve(points, {
+        curveTightness: CURVE_TIGHTNESS,
+      });
     }
 
-    root.appendChild(line);
+    if (line) {
+      line.classList.add("connection");
+      if (edge.type === EdgeType.Child) {
+        line.classList.add("connection__child");
+      } else if (edge.type === EdgeType.ShadowRoot) {
+        line.classList.add("connection__shadow-root");
+      } else if (edge.type === EdgeType.AssignedElement) {
+        line.classList.add("connection__assigned-element");
+      }
+
+      root.appendChild(line);
+    }
   }
 }
 
 export class GraphRenderer {
-  private root: SVGElement;
-  private graph: Graph = {
-    nodes: [],
-    edges: [],
-    layers: [],
-  };
+  private root: SVGSVGElement;
+  private graph: Graph = new Graph();
 
-  constructor({ root }: { root: SVGElement }) {
+  constructor({ root }: { root: SVGSVGElement }) {
     this.root = root;
   }
 
@@ -275,10 +339,8 @@ export class GraphRenderer {
     this.root.innerHTML = "";
 
     this.graph = graphFromDomTree(tree);
+    layoutGraph(this.graph);
 
-    assignGraphNodeToLayers(this.graph);
-    fillLayers(this.graph);
-    layoutGraphNodes(this.graph);
     renderGraph(this.graph, this.root);
   }
 
