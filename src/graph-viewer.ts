@@ -37,6 +37,8 @@ export class GraphViewer extends LitElement {
       :host {
         display: block;
 
+        --max-height: 500px;
+
         --node-color: #e4e4e4;
         --node-border-color: #c0c0c0;
         --node-border-width: 4;
@@ -54,7 +56,8 @@ export class GraphViewer extends LitElement {
 
       svg {
         width: 100%;
-        height: 600px;
+        height: 100%;
+        max-height: var(--max-height);
       }
 
       .node {

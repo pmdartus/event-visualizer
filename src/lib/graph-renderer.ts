@@ -38,6 +38,7 @@ interface GraphEdge {
 
 type Layer = GraphNodeId[];
 
+const GRAPH_PADDING = 20;
 const NODE_SIZE = 80;
 const HORIZONTAL_SPACING = 50;
 const VERTICAL_SPACING = 50;
@@ -253,6 +254,9 @@ function renderGraph(graph: Graph, root: SVGSVGElement) {
 
   const rc = rough.svg(root);
 
+  const nodesContainer = createSvgElement("g");
+  root.appendChild(nodesContainer);
+
   for (const node of nodes) {
     if (node.type !== NodeType.Virtual) {
       const rect = rc.rectangle(node.x, node.y, NODE_SIZE, NODE_SIZE);
@@ -265,7 +269,7 @@ function renderGraph(graph: Graph, root: SVGSVGElement) {
         rect.classList.add("node__shadow-root");
       }
 
-      root.appendChild(rect);
+      nodesContainer.appendChild(rect);
 
       const text = createSvgElement("text");
       text.setAttribute("x", String(node.x + NODE_SIZE / 2));
@@ -276,9 +280,12 @@ function renderGraph(graph: Graph, root: SVGSVGElement) {
       text.classList.add("node-label");
       text.textContent = getEventTargetLabel(node.treeNode!);
 
-      root.appendChild(text);
+      nodesContainer.appendChild(text);
     }
   }
+
+  const edgesContainer = createSvgElement("g");
+  root.appendChild(edgesContainer);
 
   for (const edge of edges) {
     const fromNode = graph.getNode(edge.from)!;
@@ -322,9 +329,17 @@ function renderGraph(graph: Graph, root: SVGSVGElement) {
         line.classList.add("connection__assigned-element");
       }
 
-      root.appendChild(line);
+      edgesContainer.appendChild(line);
     }
   }
+
+  const nodeContainerClientRect = nodesContainer.getBoundingClientRect();
+  root.setAttribute(
+    "viewBox",
+    `${-GRAPH_PADDING} ${-GRAPH_PADDING} ${Math.round(
+      nodeContainerClientRect.width + GRAPH_PADDING
+    )} ${Math.round(nodeContainerClientRect.height + GRAPH_PADDING)}`
+  );
 }
 
 export class GraphRenderer {
