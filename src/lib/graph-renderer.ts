@@ -39,7 +39,7 @@ interface GraphEdge {
 type Layer = GraphNodeId[];
 
 const GRAPH_PADDING = 20;
-const NODE_SIZE = 80;
+const NODE_SIZE = 50;
 const HORIZONTAL_SPACING = 50;
 const VERTICAL_SPACING = 50;
 
@@ -278,9 +278,44 @@ function renderGraph(graph: Graph, root: SVGSVGElement) {
       text.setAttribute("text-anchor", "middle");
 
       text.classList.add("node-label");
-      text.textContent = getEventTargetLabel(node.treeNode!);
+
+      if (node.treeNode instanceof Element) {
+        text.textContent = `<${node.treeNode.tagName.toLocaleLowerCase()}>`;
+      } else {
+        text.textContent = `#root`;
+      }
 
       nodesContainer.appendChild(text);
+
+      if (node.treeNode instanceof Element) {
+        const id = node.treeNode.getAttribute("id");
+
+        if (id) {
+          const idLabel = createSvgElement("text");
+          idLabel.textContent = id;
+          idLabel.setAttribute("x", String(node.x + NODE_SIZE));
+          idLabel.setAttribute("y", String(node.y));
+          idLabel.setAttribute("alignment-baseline", "central");
+          idLabel.setAttribute("text-anchor", "middle");
+
+          // Text has to be inserted before computing the text length.
+          nodesContainer.appendChild(idLabel);
+          const textLength = idLabel.getComputedTextLength();
+
+          const idBox = rc.rectangle(
+            node.x + NODE_SIZE - textLength - 10,
+            node.y - 10,
+            textLength + 20,
+            20,
+            {
+              fill: "rgba(255,0,0)",
+              fillStyle: "solid",
+            }
+          );
+
+          nodesContainer.insertBefore(idBox, idLabel);
+        }
+      }
     }
   }
 

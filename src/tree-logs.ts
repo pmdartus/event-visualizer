@@ -4,13 +4,7 @@ import { classMap } from "lit-html/directives/class-map";
 import { EventDispatchingStep } from "./lib/simulator";
 import { getEventTargetLabel } from "./utils/label";
 
-export interface EventConfig {
-  bubbles: boolean;
-  composed: boolean;
-}
-
 export type StepChangeEvent = CustomEvent<{ step: number }>;
-export type EventConfigChangeEvent = CustomEvent<{ config: EventConfig }>;
 
 @customElement("tree-logs")
 export class TreeLogs extends LitElement {
@@ -20,9 +14,6 @@ export class TreeLogs extends LitElement {
   @property()
   activeStep: number = 0;
 
-  @property()
-  eventConfig: EventConfig = { bubbles: true, composed: true };
-
   dispatchStepChange(step: number) {
     const changeStepEvent: StepChangeEvent = new CustomEvent("stepchange", {
       detail: { step },
@@ -31,21 +22,8 @@ export class TreeLogs extends LitElement {
     this.dispatchEvent(changeStepEvent);
   }
 
-  handleEventConfigChange() {
-    const eventConfigChangeEvent: EventConfigChangeEvent = new CustomEvent("eventconfigchange", {
-      detail: {
-        config: {
-          bubbles: (this.shadowRoot!.querySelector("#bubbles") as HTMLInputElement).checked!,
-          composed: (this.shadowRoot!.querySelector("#composed") as HTMLInputElement).checked!,
-        },
-      },
-    });
-
-    this.dispatchEvent(eventConfigChangeEvent);
-  }
-
   render() {
-    const { steps, activeStep, eventConfig } = this;
+    const { steps, activeStep } = this;
 
     return html`
       <section>
@@ -58,22 +36,6 @@ export class TreeLogs extends LitElement {
           @input=${(evt: Event) =>
             this.dispatchStepChange((evt.target as HTMLInputElement).valueAsNumber)}
         />
-
-        <input
-          id="bubbles"
-          type="checkbox"
-          .checked=${eventConfig.bubbles}
-          @change=${this.handleEventConfigChange}
-        />
-        <label for="bubbles"><code>bubbles</code></label>
-
-        <input
-          id="composed"
-          type="checkbox"
-          .checked=${eventConfig.composed}
-          @change=${this.handleEventConfigChange}
-        />
-        <label for="composed"><code>composed</code></label>
       </section>
 
       <table>

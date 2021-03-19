@@ -41,6 +41,21 @@
       </template>
     </embedded-event-visualizer>
 
+    <embedded-event-visualizer eventcomposed>
+      <div slot="footer">Event dispatching from slotted content</div>
+
+      <template>
+        <div id="a">
+          <template shadow-root mode="open">
+            <div id="b">
+              <slot></slot>
+            </div>
+          </template>
+          <div id="c" target></div>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
     <script src="/dist/embedded.js" type="module"></script>
   </body>
 </html>

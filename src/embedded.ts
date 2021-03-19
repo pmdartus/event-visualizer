@@ -1,4 +1,4 @@
-import { LitElement, html, css, property, customElement } from "lit-element";
+import { LitElement, html, css, property, customElement, PropertyValues } from "lit-element";
 
 import "./graph-viewer";
 import "./tree-logs";
@@ -10,7 +10,7 @@ import {
   simulateDispatchEvent,
 } from "./lib/simulator";
 
-import type { EventConfigChangeEvent, StepChangeEvent } from "./tree-logs";
+import type { StepChangeEvent } from "./tree-logs";
 
 @customElement("embedded-event-visualizer")
 export default class EmbeddedEventVisualizer extends LitElement {
@@ -39,8 +39,8 @@ export default class EmbeddedEventVisualizer extends LitElement {
       const slotName = (evt.target as HTMLSlotElement).name;
 
       if (slotName === "") {
-        this.recomputeTree();
-        this.recomputeEventDispatching();
+        this.computeTree();
+        this.computeEventDispatchingStep();
       }
     });
   }
@@ -52,7 +52,7 @@ export default class EmbeddedEventVisualizer extends LitElement {
     };
   }
 
-  recomputeTree() {
+  computeTree() {
     const template = this.querySelector("template");
 
     if (template) {
@@ -60,7 +60,7 @@ export default class EmbeddedEventVisualizer extends LitElement {
     }
   }
 
-  recomputeEventDispatching() {
+  computeEventDispatchingStep() {
     const { tree, eventConfig } = this;
 
     if (!tree) {
@@ -76,47 +76,67 @@ export default class EmbeddedEventVisualizer extends LitElement {
     this.activeStep = 0;
   }
 
-  handleStepChange(evt: StepChangeEvent) {
-    this.activeStep = evt.detail.step;
-
-    this.recomputeEventDispatching();
-  }
-
-  handleEventConfigChange(evt: EventConfigChangeEvent) {
-    const { composed, bubbles } = evt.detail.config;
-    this.eventcomposed = composed;
-    this.eventbubbles = bubbles;
-
-    this.recomputeEventDispatching();
+  updated(props: PropertyValues) {
+    if (props.has("eventcomposed") || props.has("eventbubbles")) {
+      this.computeEventDispatchingStep();
+    }
   }
 
   render() {
     return html`
-      <div id="content">
-        <graph-viewer
-          .tree=${this.tree}
-          .steps=${this.steps}
-          .activeStep=${this.activeStep}
-        ></graph-viewer>
-        <tree-logs
-          .steps=${this.steps}
-          .activeStep=${this.activeStep}
-          .eventConfig=${this.eventConfig}
-          @stepchange=${this.handleStepChange}
-          @eventconfigchange=${this.handleEventConfigChange}
-        ></tree-logs>
+      <div id="main">
+        <div id="left-panel">
+          <graph-viewer
+            .tree=${this.tree}
+            .steps=${this.steps}
+            .activeStep=${this.activeStep}
+          ></graph-viewer>
+        </div>
+
+        <div id="right-panel">
+          Event configuration:
+          <input
+            id="bubbles"
+            type="checkbox"
+            .checked=${this.eventbubbles}
+            @change=${(evt: Event) =>
+              (this.eventbubbles = (evt.target as HTMLInputElement).checked)}
+          />
+          <label for="bubbles">bubbles</label>
+
+          <input
+            id="composed"
+            type="checkbox"
+            .checked=${this.eventcomposed}
+            @change=${(evt: Event) =>
+              (this.eventcomposed = (evt.target as HTMLInputElement).checked)}
+          />
+          <label for="composed">composed</label>
+
+          <tree-logs
+            .steps=${this.steps}
+            .activeStep=${this.activeStep}
+            @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
+          ></tree-logs>
+        </div>
       </div>
 
       <slot hidden></slot>
 
-      <slot name="footer"></slot>
+      <slot id="footer" name="footer"></slot>
     `;
   }
 
   static styles = css`
     :host {
+      --font-family: arial, sans-serif;
+      --font-color: #212121;
+
       --border-color: #eee;
       --padding-size: 0.5em;
+
+      font-family: var(--font-family);
+      color: var(--font-color);
 
       display: flex;
       flex-direction: column;
@@ -125,22 +145,22 @@ export default class EmbeddedEventVisualizer extends LitElement {
       border-radius: 3px;
     }
 
-    #content {
+    #main {
       display: flex;
     }
 
-    graph-viewer {
+    #footer {
+      display: block;
+      border-top: 1px solid var(--border-color);
+      padding: var(--padding-size);
+    }
+
+    #left-panel {
       flex-grow: 1;
     }
 
     tree-logs {
       width: 500px;
-    }
-
-    slot[name="footer"] {
-      display: block;
-      border-top: 1px solid var(--border-color);
-      padding: var(--padding-size);
     }
   `;
 }
