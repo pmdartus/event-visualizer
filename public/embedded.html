@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Visualizer Embedded</title>
+
+    <style>
+      embedded-event-visualizer {
+        margin-bottom: 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <embedded-event-visualizer eventbubbles eventcomposed>
+      <div slot="footer">Event dispatching in a shadow tree</div>
+
+      <template>
+        <div id="a">
+          <template shadow-root mode="open">
+            <div id="b" target></div>
+          </template>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
+    <embedded-event-visualizer eventcomposed>
+      <div slot="footer">Event dispatching in a nested shadow tree</div>
+
+      <template>
+        <div id="a">
+          <template shadow-root mode="open">
+            <div id="b">
+              <template shadow-root mode="open">
+                <div id="c" target></div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
+    <script src="/dist/embedded.js" type="module"></script>
+  </body>
+</html>
