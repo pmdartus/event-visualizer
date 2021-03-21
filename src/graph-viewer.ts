@@ -39,59 +39,46 @@ export class GraphViewer extends LitElement {
 
         --max-height: 500px;
 
-        --node-color: #e4e4e4;
-        --node-border-color: #c0c0c0;
-        --node-border-width: 4;
+        --node-target-fill-color: #ffa224;
+        --node-target-stroke-color: #e4d60f;
 
-        --node-target-color: #f3ea71;
-        --node-target-border-color: #e4d60f;
+        --node-composed-path-fill-color: #f3ea71;
+        --node-composed-path-stroke-color: #c49000;
 
-        --node-current-target-border-color: #f59e2e;
-        --node-current-target-border-width: calc(var(--node-border-width) * 2);
-
-        --connection-color: #505050;
-        --connection-child-color: var(--connection-color);
-        --connection-border-width: 3;
+        --edge-stroke-color: #505050;
       }
 
       svg {
         width: 100%;
         height: 100%;
         max-height: var(--max-height);
-      }
-
-      .node {
-        fill: var(--node-color);
-        stroke: var(--node-border-color);
-        stroke-width: var(--node-border-width);
-      }
-
-      .node__target {
-        fill: var(--node-target-color);
-        stroke: var(--node-target-border-color);
-      }
-
-      .node__current-target {
-        stroke: var(--node-current-target-border-color);
-        stroke-width: var(--node-current-target-border-width);
-      }
-
-      .node-label {
         font-family: monospace;
       }
 
-      .connection {
-        stroke: var(--connection-child-color);
-        stroke-width: var(--connection-border-width);
+      .edge path {
+        stroke: var(--edge-stroke-color);
       }
 
-      .connection__shadow-root {
+      .edge__shadow-root {
         stroke-dasharray: 8;
       }
 
-      .connection__assigned-element {
+      .edge__assigned-element {
         stroke-dasharray: 1, 4;
         stroke-linecap: round;
+      }
+
+      .node__composed-path path {
+        fill: var(--node-composed-path-fill-color);
+      }
+
+      .edge__composed-path path {
+        stroke: var(--node-composed-path-stroke-color);
+        stroke-width: 2;
+      }
+
+      .node__target path {
+        fill: var(--node-target-fill-color);
       }
     `;
   }
