@@ -26,18 +26,6 @@ export class TreeLogs extends LitElement {
     const { steps, activeStep } = this;
 
     return html`
-      <section>
-        <input
-          title="Active step"
-          type="range"
-          min="0"
-          max=${steps.length - 1}
-          .value=${activeStep}
-          @input=${(evt: Event) =>
-            this.dispatchStepChange((evt.target as HTMLInputElement).valueAsNumber)}
-        />
-      </section>
-
       <table>
         <thead>
           <tr>

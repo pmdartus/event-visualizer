@@ -1,6 +1,7 @@
 import { LitElement, html, css, property, customElement, PropertyValues } from "lit-element";
 
 import "./graph-viewer";
+import "./player-controls";
 import "./tree-logs";
 
 import {
@@ -112,6 +113,12 @@ export default class EmbeddedEventVisualizer extends LitElement {
               (this.eventcomposed = (evt.target as HTMLInputElement).checked)}
           />
           <label for="composed">composed</label>
+
+          <player-controls
+            .steps=${this.steps}
+            .activeStep=${this.activeStep}
+            @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
+          ></player-controls>
 
           <tree-logs
             .steps=${this.steps}
