@@ -1,304 +1,14 @@
 import rough from "roughjs";
 
-import { DomTree, EventDispatchingStep, TreeNode } from "./simulator";
-import { RoughSVG } from "roughjs/bin/svg";
+import { createSvgElement } from "../utils/svg";
 
-// https://blog.disy.net/sugiyama-method/
-// http://www.graphviz.org/Documentation/TSE93.pdf
-// https://publications.lib.chalmers.se/records/fulltext/161388.pdf
-// https://i11www.iti.kit.edu/_media/teaching/winter2016/graphvis/graphvis-ws16-v8.pdf
+import { layoutGraph } from "./graph-layout";
+import { graphFromDomTree, Graph, GraphNodeType, GraphEdgeType } from "./graph";
+import { NODE_SIZE, GRAPH_PADDING, SHADOW_TREE_PADDING, CURVE_TIGHTNESS } from "./graph-constants";
 
-type GraphNodeId = string;
+import { DomTree, EventDispatchingStep } from "./simulator";
 
-enum NodeType {
-  Element,
-  ShadowRoot,
-  Virtual,
-}
-
-enum EdgeType {
-  Child,
-  ShadowRoot,
-  AssignedElement,
-}
-
-type Point = [number, number];
-
-interface GraphNode {
-  id: GraphNodeId;
-  type: NodeType;
-  treeNode: TreeNode | null;
-  x: number;
-  y: number;
-}
-
-interface GraphEdge {
-  type: EdgeType;
-  from: GraphNodeId;
-  to: GraphNodeId;
-  path: Point[];
-}
-
-type Layer = GraphNodeId[];
-
-const GRAPH_PADDING = 20;
-const NODE_SIZE = 50;
-const SHADOW_TREE_PADDING = 10;
-const HORIZONTAL_SPACING = 50;
-const VERTICAL_SPACING = 50;
-
-const CURVE_TIGHTNESS = 0.8;
-
-class Graph {
-  nodes: GraphNode[] = [];
-  edges: GraphEdge[] = [];
-  layers: Layer[] = [];
-
-  createNode(config: Omit<GraphNode, "x" | "y">): GraphNode {
-    const node = {
-      ...config,
-      x: 0,
-      y: 0,
-    };
-
-    this.nodes.push(node);
-    return node;
-  }
-
-  createEdge(config: Omit<GraphEdge, "path">): GraphEdge {
-    const edge = {
-      ...config,
-      path: [],
-    };
-
-    this.edges.push(edge);
-    return edge;
-  }
-
-  getNode(id: GraphNodeId): GraphNode | undefined {
-    return this.nodes.find((node) => node.id === id);
-  }
-
-  getOutgoingEdges(id: GraphNodeId): GraphEdge[] {
-    return this.edges.filter((edge) => edge.from === id);
-  }
-
-  getIncomingEdges(id: GraphNodeId): GraphEdge[] {
-    return this.edges.filter((edge) => edge.to === id);
-  }
-
-  getLayer(id: GraphNodeId): number {
-    return this.layers.findIndex((layer) => layer.includes(id));
-  }
-}
-
-function createSvgElement<K extends keyof SVGElementTagNameMap>(
-  tagName: K
-): SVGElementTagNameMap[K] {
-  return document.createElementNS("http://www.w3.org/2000/svg", tagName);
-}
-
-function graphFromDomTree(tree: DomTree): Graph {
-  const graph = new Graph();
-
-  const treeNodeToId: Map<TreeNode, string> = new Map();
-
-  for (let index = 0; index < tree.nodes.length; index++) {
-    const treeNode = tree.nodes[index];
-
-    const id = String(index);
-    const type = treeNode instanceof Element ? NodeType.Element : NodeType.ShadowRoot;
-
-    treeNodeToId.set(treeNode, id);
-    graph.createNode({
-      id,
-      type,
-      treeNode,
-    });
-  }
-
-  for (const treeNode of tree.nodes) {
-    const id = treeNodeToId.get(treeNode)!;
-
-    for (const childTreeNode of Array.from(treeNode.children)) {
-      const childId = treeNodeToId.get(childTreeNode)!;
-
-      graph.createEdge({
-        from: id,
-        to: childId,
-        type: EdgeType.Child,
-      });
-    }
-
-    if (treeNode instanceof HTMLSlotElement) {
-      for (const assignedElement of treeNode.assignedElements()) {
-        const assignedElementId = treeNodeToId.get(assignedElement)!;
-
-        graph.createEdge({
-          from: id,
-          to: assignedElementId,
-          type: EdgeType.AssignedElement,
-        });
-      }
-    }
-
-    if (treeNode instanceof ShadowRoot) {
-      const hostElementId = treeNodeToId.get(treeNode.host)!;
-
-      graph.createEdge({
-        from: hostElementId,
-        to: id,
-        type: EdgeType.ShadowRoot,
-      });
-    }
-  }
-
-  return graph;
-}
-
-function assignToLayers(graph: Graph) {
-  const layers: Layer[] = [];
-
-  let remainingNodes = [...graph.nodes];
-  let remainingEdges = [...graph.edges];
-
-  while (remainingNodes.length !== 0 || remainingEdges.length !== 0) {
-    const layer = remainingNodes
-      .filter((node) => remainingEdges.every((edge) => edge.to !== node.id))
-      .map((node) => node.id);
-
-    remainingNodes = remainingNodes.filter((node) => !layer.includes(node.id));
-    remainingEdges = remainingEdges.filter((edge) => !layer.includes(edge.from));
-
-    layers.push(layer);
-  }
-
-  graph.layers = layers;
-}
-
-function fillLayers(graph: Graph) {
-  let currentId = 0;
-
-  for (let i = 0; i < graph.layers.length - 1; i++) {
-    const layer = graph.layers[i];
-    const nextLayer = graph.layers[i + 1];
-
-    for (const nodeId of layer) {
-      const outgoingEdges = graph.getOutgoingEdges(nodeId);
-
-      for (const outgoingEdge of outgoingEdges) {
-        if (!nextLayer.includes(outgoingEdge.to)) {
-          const virtualId = `#${currentId++}`;
-
-          graph.createNode({
-            id: virtualId,
-            type: NodeType.Virtual,
-            treeNode: null,
-          });
-          nextLayer.push(virtualId);
-
-          graph.createEdge({
-            from: virtualId,
-            to: outgoingEdge.to,
-            type: outgoingEdge.type,
-          });
-          outgoingEdge.to = virtualId;
-        }
-      }
-    }
-  }
-}
-
-function updateCoordinates(graph: Graph) {
-  const { nodes, layers } = graph;
-
-  // Give initial node coordinates
-  for (const node of nodes) {
-    const layerIndex = graph.getLayer(node.id);
-    const indexInLayer = layers[layerIndex].indexOf(node.id);
-
-    node.x = (NODE_SIZE + HORIZONTAL_SPACING) * indexInLayer;
-    node.y = (NODE_SIZE + VERTICAL_SPACING) * layerIndex;
-  }
-
-  // Redistribute node coordinates
-  for (let layerIndex = 0; layerIndex < graph.layers.length; layerIndex += 2) {
-    const layer = graph.layers[layerIndex];
-    for (const nodeId of layer) {
-      const node = graph.getNode(nodeId)!;
-      const children = [
-        ...graph.getIncomingEdges(nodeId).map((edge) => graph.getNode(edge.from)!),
-        ...graph.getOutgoingEdges(nodeId).map((edge) => graph.getNode(edge.to)!),
-      ];
-
-      const xMean = children.reduce((acc, child) => acc + child.x, 0) / children.length;
-      node.x = xMean;
-    }
-  }
-}
-
-function cleanupVirtual(graph: Graph) {
-  const { nodes, edges, layers } = graph;
-
-  const concreteEdges: GraphEdge[] = [];
-
-  // Remove the virtual nodes
-  const concreteNodes = nodes.filter((node) => node.type !== NodeType.Virtual);
-
-  // Remove virtual nodes from layers
-  const concreteLayers = layers.map((layer) => {
-    return layer.filter((nodeId) => concreteNodes.some((node) => node.id === nodeId));
-  });
-
-  // Keep concrete edges and collapse virtual edges together.
-  for (const edge of edges) {
-    let isConcrete = false;
-
-    const fromNode = graph.getNode(edge.from)!;
-    let toNode = graph.getNode(edge.to)!;
-
-    if (fromNode.type !== NodeType.Virtual && toNode.type !== NodeType.Virtual) {
-      isConcrete = true;
-      edge.path = [
-        [fromNode.x + NODE_SIZE / 2, fromNode.y + NODE_SIZE],
-        [toNode.x + NODE_SIZE / 2, toNode.y],
-      ];
-    } else if (fromNode.type !== NodeType.Virtual) {
-      isConcrete = true;
-      const path: [number, number][] = [];
-
-      path.push([fromNode.x + NODE_SIZE / 2, fromNode.y + NODE_SIZE]);
-
-      while (toNode.type === NodeType.Virtual) {
-        path.push([toNode.x + NODE_SIZE / 2, toNode.y + NODE_SIZE / 2]);
-
-        const followingEdge = graph.getOutgoingEdges(toNode.id)[0];
-        toNode = graph.getNode(followingEdge.to)!;
-      }
-
-      path.push([toNode.x + NODE_SIZE / 2, toNode.y]);
-
-      edge.to = toNode.id;
-      edge.path = path;
-    }
-
-    if (isConcrete) {
-      concreteEdges.push(edge);
-    }
-  }
-
-  // Update graph properties
-  graph.nodes = concreteNodes;
-  graph.edges = concreteEdges;
-  graph.layers = concreteLayers;
-}
-
-function layoutGraph(graph: Graph) {
-  assignToLayers(graph);
-  fillLayers(graph);
-  updateCoordinates(graph);
-  cleanupVirtual(graph);
-}
+type RoughSVG = ReturnType<typeof rough["svg"]>;
 
 function renderShadowContainers({
   graph,
@@ -315,7 +25,7 @@ function renderShadowContainers({
   root.appendChild(shadowTreesContainer);
 
   for (const node of nodes) {
-    if (node.type === NodeType.ShadowRoot) {
+    if (node.type === GraphNodeType.ShadowRoot) {
       const shadowRoot = node.treeNode;
 
       const containedNodes = nodes
@@ -413,7 +123,7 @@ function renderNodes({
   root.appendChild(nodesContainer);
 
   for (const node of nodes) {
-    if (node.type !== NodeType.Virtual) {
+    if (node.type !== GraphNodeType.Virtual) {
       const rect = rc.rectangle(node.x, node.y, NODE_SIZE, NODE_SIZE, {
         fill: "#FFF",
         fillStyle: "solid",
@@ -421,9 +131,9 @@ function renderNodes({
       rect.setAttribute("data-graph-id", node.id);
 
       rect.classList.add("node");
-      if (node.type === NodeType.Element) {
+      if (node.type === GraphNodeType.Element) {
         rect.classList.add("node__element");
-      } else if (node.type === NodeType.ShadowRoot) {
+      } else if (node.type === GraphNodeType.ShadowRoot) {
         rect.classList.add("node__shadow-root");
       }
 
@@ -500,11 +210,11 @@ function renderEdges({
     });
 
     line.classList.add("edge");
-    if (edge.type === EdgeType.Child) {
+    if (edge.type === GraphEdgeType.Child) {
       line.classList.add("edge__child");
-    } else if (edge.type === EdgeType.ShadowRoot) {
+    } else if (edge.type === GraphEdgeType.ShadowRoot) {
       line.classList.add("edge__shadow-root");
-    } else if (edge.type === EdgeType.AssignedElement) {
+    } else if (edge.type === GraphEdgeType.AssignedElement) {
       line.classList.add("edge__assigned-element");
     }
 
