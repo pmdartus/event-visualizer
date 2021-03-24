@@ -18,6 +18,22 @@
 
       <template>
         <div id="a">
+          <div id="b">
+            <div id="c"></div>
+            <div id="d" target>
+              <div id="f"></div>
+            </div>
+          </div>
+          <div id="e"></div>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
+    <embedded-event-visualizer eventbubbles eventcomposed>
+      <div slot="footer">Event dispatching in a shadow tree</div>
+
+      <template>
+        <div id="a">
           <template shadow-root mode="open">
             <div id="b" target></div>
           </template>

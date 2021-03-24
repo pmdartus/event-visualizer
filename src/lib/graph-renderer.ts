@@ -22,6 +22,8 @@ enum EdgeType {
   AssignedElement,
 }
 
+type Point = [number, number];
+
 interface GraphNode {
   id: GraphNodeId;
   type: NodeType;
@@ -34,6 +36,7 @@ interface GraphEdge {
   type: EdgeType;
   from: GraphNodeId;
   to: GraphNodeId;
+  path: Point[];
 }
 
 type Layer = GraphNodeId[];
@@ -62,9 +65,14 @@ class Graph {
     return node;
   }
 
-  createEdge(config: GraphEdge): GraphEdge {
-    this.edges.push(config);
-    return config;
+  createEdge(config: Omit<GraphEdge, "path">): GraphEdge {
+    const edge = {
+      ...config,
+      path: [],
+    };
+
+    this.edges.push(edge);
+    return edge;
   }
 
   getNode(id: GraphNodeId): GraphNode | undefined {
@@ -148,7 +156,7 @@ function graphFromDomTree(tree: DomTree): Graph {
   return graph;
 }
 
-function assignGraphNodeToLayers(graph: Graph) {
+function assignToLayers(graph: Graph) {
   const layers: Layer[] = [];
 
   let remainingNodes = [...graph.nodes];
@@ -201,9 +209,10 @@ function fillLayers(graph: Graph) {
   }
 }
 
-function updateNodeCoordinates(graph: Graph) {
+function updateCoordinates(graph: Graph) {
   const { nodes, layers } = graph;
 
+  // Give initial node coordinates
   for (const node of nodes) {
     const layerIndex = graph.getLayer(node.id);
     const indexInLayer = layers[layerIndex].indexOf(node.id);
@@ -212,6 +221,7 @@ function updateNodeCoordinates(graph: Graph) {
     node.y = (NODE_SIZE + VERTICAL_SPACING) * layerIndex;
   }
 
+  // Redistribute node coordinates
   for (let layerIndex = 0; layerIndex < graph.layers.length; layerIndex += 2) {
     const layer = graph.layers[layerIndex];
     for (const nodeId of layer) {
@@ -227,10 +237,67 @@ function updateNodeCoordinates(graph: Graph) {
   }
 }
 
+function cleanupVirtual(graph: Graph) {
+  const { nodes, edges, layers } = graph;
+
+  const concreteEdges: GraphEdge[] = [];
+
+  // Remove the virtual nodes
+  const concreteNodes = nodes.filter((node) => node.type !== NodeType.Virtual);
+
+  // Remove virtual nodes from layers
+  const concreteLayers = layers.map((layer) => {
+    return layer.filter((nodeId) => concreteNodes.some((node) => node.id === nodeId));
+  });
+
+  // Keep concrete edges and collapse virtual edges together.
+  for (const edge of edges) {
+    let isConcrete = false;
+
+    const fromNode = graph.getNode(edge.from)!;
+    let toNode = graph.getNode(edge.to)!;
+
+    if (fromNode.type !== NodeType.Virtual && toNode.type !== NodeType.Virtual) {
+      isConcrete = true;
+      edge.path = [
+        [fromNode.x + NODE_SIZE / 2, fromNode.y + NODE_SIZE],
+        [toNode.x + NODE_SIZE / 2, toNode.y],
+      ];
+    } else if (fromNode.type !== NodeType.Virtual) {
+      isConcrete = true;
+      const path: [number, number][] = [];
+
+      path.push([fromNode.x + NODE_SIZE / 2, fromNode.y + NODE_SIZE]);
+
+      while (toNode.type === NodeType.Virtual) {
+        path.push([toNode.x + NODE_SIZE / 2, toNode.y + NODE_SIZE / 2]);
+
+        const followingEdge = graph.getOutgoingEdges(toNode.id)[0];
+        toNode = graph.getNode(followingEdge.to)!;
+      }
+
+      path.push([toNode.x + NODE_SIZE / 2, toNode.y]);
+
+      edge.to = toNode.id;
+      edge.path = path;
+    }
+
+    if (isConcrete) {
+      concreteEdges.push(edge);
+    }
+  }
+
+  // Update graph properties
+  graph.nodes = concreteNodes;
+  graph.edges = concreteEdges;
+  graph.layers = concreteLayers;
+}
+
 function layoutGraph(graph: Graph) {
-  assignGraphNodeToLayers(graph);
+  assignToLayers(graph);
   fillLayers(graph);
-  updateNodeCoordinates(graph);
+  updateCoordinates(graph);
+  cleanupVirtual(graph);
 }
 
 function renderShadowContainers({
@@ -428,51 +495,23 @@ function renderEdges({
   root.appendChild(edgesContainer);
 
   for (const edge of edges) {
-    const fromNode = graph.getNode(edge.from)!;
-    let toNode = graph.getNode(edge.to)!;
+    const line = rc.curve(edge.path, {
+      curveTightness: CURVE_TIGHTNESS,
+    });
 
-    let line: SVGElement | undefined;
-    if (fromNode.type !== NodeType.Virtual && toNode.type !== NodeType.Virtual) {
-      line = rc.line(
-        fromNode.x + NODE_SIZE / 2,
-        fromNode.y + NODE_SIZE,
-        toNode.x + NODE_SIZE / 2,
-        toNode.y
-      );
-    } else if (fromNode.type !== NodeType.Virtual) {
-      const points: [number, number][] = [];
-
-      points.push([fromNode.x + NODE_SIZE / 2, fromNode.y + NODE_SIZE]);
-
-      while (toNode.type === NodeType.Virtual) {
-        points.push([toNode.x + NODE_SIZE / 2, toNode.y + NODE_SIZE / 2]);
-
-        const followingEdge = graph.getOutgoingEdges(toNode.id)[0];
-        toNode = graph.getNode(followingEdge.to)!;
-      }
-
-      points.push([toNode.x + NODE_SIZE / 2, toNode.y]);
-
-      line = rc.curve(points, {
-        curveTightness: CURVE_TIGHTNESS,
-      });
+    line.classList.add("edge");
+    if (edge.type === EdgeType.Child) {
+      line.classList.add("edge__child");
+    } else if (edge.type === EdgeType.ShadowRoot) {
+      line.classList.add("edge__shadow-root");
+    } else if (edge.type === EdgeType.AssignedElement) {
+      line.classList.add("edge__assigned-element");
     }
 
-    if (line) {
-      line.classList.add("edge");
-      if (edge.type === EdgeType.Child) {
-        line.classList.add("edge__child");
-      } else if (edge.type === EdgeType.ShadowRoot) {
-        line.classList.add("edge__shadow-root");
-      } else if (edge.type === EdgeType.AssignedElement) {
-        line.classList.add("edge__assigned-element");
-      }
+    line.dataset.from = graph.getNode(edge.from)!.id;
+    line.dataset.to = graph.getNode(edge.to)!.id;
 
-      line.dataset.from = fromNode.id;
-      line.dataset.to = toNode.id;
-
-      edgesContainer.appendChild(line);
-    }
+    edgesContainer.appendChild(line);
   }
 
   return edgesContainer;
