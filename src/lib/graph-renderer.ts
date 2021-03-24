@@ -4,7 +4,7 @@ import { createSvgElement } from "../utils/svg";
 
 import { layoutGraph } from "./graph-layout";
 import { graphFromDomTree, Graph, GraphNodeType, GraphEdgeType } from "./graph";
-import { NODE_SIZE, GRAPH_PADDING, SHADOW_TREE_PADDING, CURVE_TIGHTNESS } from "./graph-constants";
+import { GRAPH_PADDING, SHADOW_TREE_PADDING, CURVE_TIGHTNESS } from "./graph-constants";
 
 import { DomTree, EventDispatchingStep } from "./simulator";
 
@@ -72,19 +72,27 @@ function renderShadowContainers({
 
       for (const containedNode of containedNodes) {
         containerX1 = Math.min(
-          containedNode.node.x - containedNode.depth * SHADOW_TREE_PADDING,
+          containedNode.node.x -
+            containedNode.node.width / 2 -
+            containedNode.depth * SHADOW_TREE_PADDING,
           containerX1
         );
         containerY1 = Math.min(
-          containedNode.node.y - containedNode.depth * SHADOW_TREE_PADDING,
+          containedNode.node.y -
+            containedNode.node.height / 2 -
+            containedNode.depth * SHADOW_TREE_PADDING,
           containerY1
         );
         containerX2 = Math.max(
-          containedNode.node.x + NODE_SIZE + 2 * containedNode.depth * SHADOW_TREE_PADDING,
+          containedNode.node.x +
+            containedNode.node.width / 2 +
+            2 * containedNode.depth * SHADOW_TREE_PADDING,
           containerX2
         );
         containerY2 = Math.max(
-          containedNode.node.y + NODE_SIZE + 2 * containedNode.depth * SHADOW_TREE_PADDING,
+          containedNode.node.y +
+            containedNode.node.height / 2 +
+            2 * containedNode.depth * SHADOW_TREE_PADDING,
           containerY2
         );
         maxDepth = Math.max(containedNode.depth, maxDepth);
@@ -124,10 +132,16 @@ function renderNodes({
 
   for (const node of nodes) {
     if (node.type !== GraphNodeType.Virtual) {
-      const rect = rc.rectangle(node.x, node.y, NODE_SIZE, NODE_SIZE, {
-        fill: "#FFF",
-        fillStyle: "solid",
-      });
+      const rect = rc.rectangle(
+        node.x - node.width / 2,
+        node.y - node.height / 2,
+        node.width,
+        node.height,
+        {
+          fill: "#FFF",
+          fillStyle: "solid",
+        }
+      );
       rect.setAttribute("data-graph-id", node.id);
 
       rect.classList.add("node");
@@ -140,8 +154,8 @@ function renderNodes({
       nodesContainer.appendChild(rect);
 
       const text = createSvgElement("text");
-      text.setAttribute("x", String(node.x + NODE_SIZE / 2));
-      text.setAttribute("y", String(node.y + NODE_SIZE / 2));
+      text.setAttribute("x", String(node.x));
+      text.setAttribute("y", String(node.y));
       text.setAttribute("alignment-baseline", "central");
       text.setAttribute("text-anchor", "middle");
 
@@ -161,8 +175,8 @@ function renderNodes({
         if (id) {
           const idLabel = createSvgElement("text");
           idLabel.textContent = id;
-          idLabel.setAttribute("x", String(node.x + NODE_SIZE));
-          idLabel.setAttribute("y", String(node.y));
+          idLabel.setAttribute("x", String(node.x + node.width / 2));
+          idLabel.setAttribute("y", String(node.y - node.height / 2));
           idLabel.setAttribute("alignment-baseline", "central");
           idLabel.setAttribute("text-anchor", "middle");
 
@@ -171,8 +185,8 @@ function renderNodes({
           const textLength = idLabel.getComputedTextLength();
 
           const idBox = rc.rectangle(
-            node.x + NODE_SIZE - textLength - 5,
-            node.y - 10,
+            node.x + node.width / 2 - textLength - 5,
+            node.y - node.height / 2 - 10,
             textLength + 15,
             20,
             {

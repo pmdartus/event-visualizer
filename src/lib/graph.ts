@@ -1,3 +1,4 @@
+import { NODE_SIZE } from "./graph-constants";
 import { DomTree, TreeNode } from "./simulator";
 
 export type GraphNodeId = string;
@@ -22,6 +23,8 @@ export interface GraphNode {
   treeNode: TreeNode | null;
   x: number;
   y: number;
+  width: number;
+  height: number;
 }
 
 export interface GraphEdge {
@@ -38,21 +41,23 @@ export class Graph {
   edges: GraphEdge[] = [];
   layers: Layer[] = [];
 
-  createNode(config: Omit<GraphNode, "x" | "y">): GraphNode {
+  createNode(config: Partial<GraphNode> & Pick<GraphNode, "id" | "type" | "treeNode">): GraphNode {
     const node = {
-      ...config,
       x: 0,
       y: 0,
+      width: NODE_SIZE,
+      height: NODE_SIZE,
+      ...config,
     };
 
     this.nodes.push(node);
     return node;
   }
 
-  createEdge(config: Omit<GraphEdge, "path">): GraphEdge {
+  createEdge(config: Partial<GraphEdge> & Pick<GraphEdge, "type" | "from" | "to">): GraphEdge {
     const edge = {
-      ...config,
       path: [],
+      ...config,
     };
 
     this.edges.push(edge);

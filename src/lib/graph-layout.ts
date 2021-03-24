@@ -110,23 +110,23 @@ function cleanupVirtual(graph: Graph) {
     if (fromNode.type !== GraphNodeType.Virtual && toNode.type !== GraphNodeType.Virtual) {
       isConcrete = true;
       edge.path = [
-        [fromNode.x + NODE_SIZE / 2, fromNode.y + NODE_SIZE],
-        [toNode.x + NODE_SIZE / 2, toNode.y],
+        [fromNode.x, fromNode.y + fromNode.height / 2],
+        [toNode.x, toNode.y - toNode.height / 2],
       ];
     } else if (fromNode.type !== GraphNodeType.Virtual) {
       isConcrete = true;
       const path: [number, number][] = [];
 
-      path.push([fromNode.x + NODE_SIZE / 2, fromNode.y + NODE_SIZE]);
+      path.push([fromNode.x, fromNode.y + fromNode.height / 2]);
 
       while (toNode.type === GraphNodeType.Virtual) {
-        path.push([toNode.x + NODE_SIZE / 2, toNode.y + NODE_SIZE / 2]);
+        path.push([toNode.x, toNode.y]);
 
         const followingEdge = graph.getOutgoingEdges(toNode.id)[0];
         toNode = graph.getNode(followingEdge.to)!;
       }
 
-      path.push([toNode.x + NODE_SIZE / 2, toNode.y]);
+      path.push([toNode.x, toNode.y - toNode.height / 2]);
 
       edge.to = toNode.id;
       edge.path = path;
