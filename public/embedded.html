@@ -19,12 +19,21 @@
       <template>
         <div id="a">
           <div id="b">
+            <template shadow-root mode="open">
+              <div target></div>
+            </template>
             <div id="c"></div>
-            <div id="d" target>
-              <div id="f"></div>
-            </div>
+            <div id="d" target></div>
           </div>
-          <div id="e"></div>
+          <div id="e">
+            <template shadow-root mode="open">
+              <div target></div>
+            </template>
+            <span></span>
+          </div>
+          <template shadow-root mode="open">
+            <div target></div>
+          </template>
         </div>
       </template>
     </embedded-event-visualizer>
@@ -66,8 +75,14 @@
             <div id="b">
               <slot></slot>
             </div>
+            <div id="b">
+              <span></span>
+            </div>
           </template>
           <div id="c" target></div>
+          <div id="c" slot="foo"></div>
+          <div id="c" target></div>
+          <div id="c"></div>
         </div>
       </template>
     </embedded-event-visualizer>

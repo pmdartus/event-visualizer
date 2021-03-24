@@ -6,13 +6,27 @@ import { NODE_SIZE, HORIZONTAL_SPACING, VERTICAL_SPACING } from "./graph-constan
 // https://publications.lib.chalmers.se/records/fulltext/161388.pdf
 // https://i11www.iti.kit.edu/_media/teaching/winter2016/graphvis/graphvis-ws16-v8.pdf
 
+// Give weight for each nodes. The higher the weight is the further it will be on the right-hand
+// side of the graph. In this case we want all the shadow tree to be on the right of the subtrees.
+const NODE_WEIGHT: Record<GraphNodeType, number> = {
+  [GraphNodeType.Element]: 0,
+  [GraphNodeType.Virtual]: 0,
+  [GraphNodeType.ShadowRoot]: 1,
+};
+
+/**
+ * Assign each node to a graph layer.
+ */
 function assignToLayers(graph: Graph) {
   const layers: Layer[] = [];
 
   let remainingNodes = [...graph.nodes];
   let remainingEdges = [...graph.edges];
 
-  while (remainingNodes.length !== 0 || remainingEdges.length !== 0) {
+  // Until all the nodes have been assigned to a layer runs the following check. A node can be
+  // assigned to a layer if all the nodes from the incoming connects have already been assigned.
+  // This approach only works because the graph is acyclic by nature.
+  while (remainingNodes.length !== 0) {
     const layer = remainingNodes
       .filter((node) => remainingEdges.every((edge) => edge.to !== node.id))
       .map((node) => node.id);
@@ -26,12 +40,21 @@ function assignToLayers(graph: Graph) {
   graph.layers = layers;
 }
 
+/**
+ * Populate the layers with virtual nodes and virtual edges.
+ */
 function fillLayers(graph: Graph) {
+  const { layers } = graph;
+
   let currentId = 0;
 
-  for (let i = 0; i < graph.layers.length - 1; i++) {
-    const layer = graph.layers[i];
-    const nextLayer = graph.layers[i + 1];
+  // A new virtual node has to be added is an outgoing edge from a given point to another node
+  // located in a layer different than the one below. In this case, a new virtual node is added in
+  // the next layer and the outgoing edge is broken into 2: an edge from the origin node to the
+  // virtual node and another one from the virtual node to the target node.
+  for (let i = 0; i < layers.length - 1; i++) {
+    const layer = layers[i];
+    const nextLayer = layers[i + 1];
 
     for (const nodeId of layer) {
       const outgoingEdges = graph.getOutgoingEdges(nodeId);
@@ -56,6 +79,48 @@ function fillLayers(graph: Graph) {
         }
       }
     }
+  }
+}
+
+/**
+ * Reorder all the nodes to minimize potential crossing.
+ */
+function reorderLayers(graph: Graph) {
+  const { layers } = graph;
+
+  // Recompute node position based on the barycenter with the previous layer. This approach is
+  // far from being ideal since it ignores children order.
+  for (let i = 1; i < layers.length; i++) {
+    const layer = layers[i];
+    const previousLayer = layers[i - 1];
+
+    const nodesParentBarycenter = layer.map((id) => {
+      const incomingEdges = graph.getIncomingEdges(id);
+
+      const barycenter =
+        incomingEdges
+          .map((edge) => previousLayer.indexOf(edge.from))
+          .reduce((acc, position) => acc + position) / incomingEdges.length;
+
+      return {
+        id,
+        barycenter,
+      };
+    });
+
+    // If 2 nodes have the same barycenter, determine the node position based on the node weight.
+    layers[i] = nodesParentBarycenter
+      .sort((itemA, itemB) => {
+        if (itemA.barycenter !== itemB.barycenter) {
+          return itemA.barycenter - itemB.barycenter;
+        } else {
+          const nodeA = graph.getNode(itemA.id)!;
+          const nodeB = graph.getNode(itemB.id)!;
+
+          return NODE_WEIGHT[nodeA.type] - NODE_WEIGHT[nodeB.type];
+        }
+      })
+      .map((item) => item.id);
   }
 }
 
@@ -87,6 +152,12 @@ function updateCoordinates(graph: Graph) {
   }
 }
 
+/**
+ * Clean up the graph after it being layed out:
+ *  - Remove all the inserted virtual nodes
+ *  - Remove virtual nodes from graph layers
+ *  - Collapse virtual edges into concrete edges
+ */
 function cleanupVirtual(graph: Graph) {
   const { nodes, edges, layers } = graph;
 
@@ -146,6 +217,7 @@ function cleanupVirtual(graph: Graph) {
 export function layoutGraph(graph: Graph) {
   assignToLayers(graph);
   fillLayers(graph);
+  reorderLayers(graph);
   updateCoordinates(graph);
   cleanupVirtual(graph);
 }
