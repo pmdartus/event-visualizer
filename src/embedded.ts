@@ -123,6 +123,7 @@ export default class EmbeddedEventVisualizer extends LitElement {
           <tree-logs
             .steps=${this.steps}
             .activeStep=${this.activeStep}
+            .eventConfig=${{ bubbles: this.eventbubbles, composed: this.eventcomposed }}
             @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
           ></tree-logs>
         </div>
@@ -166,8 +167,13 @@ export default class EmbeddedEventVisualizer extends LitElement {
       flex-grow: 1;
     }
 
+    player-controls {
+      margin-top: 0.5em;
+    }
+
     tree-logs {
       width: 500px;
+      margin-top: 1.5em;
     }
   `;
 }
