@@ -79,6 +79,10 @@ export class Graph {
   getLayer(id: GraphNodeId): number {
     return this.layers.findIndex((layer) => layer.includes(id));
   }
+
+  getNodesInLayer(layerIndex: number): GraphNode[] {
+    return this.layers[layerIndex].map((nodeId) => this.getNode(nodeId)!);
+  }
 }
 
 export function graphFromDomTree(domTree: DomTree): Graph {

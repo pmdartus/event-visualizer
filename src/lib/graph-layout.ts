@@ -1,10 +1,14 @@
 import { Graph, GraphEdge, Layer, GraphNodeType } from "./graph";
-import { NODE_SIZE, HORIZONTAL_SPACING, VERTICAL_SPACING } from "./graph-constants";
 
 // https://blog.disy.net/sugiyama-method/
 // http://www.graphviz.org/Documentation/TSE93.pdf
 // https://publications.lib.chalmers.se/records/fulltext/161388.pdf
 // https://i11www.iti.kit.edu/_media/teaching/winter2016/graphvis/graphvis-ws16-v8.pdf
+
+interface LayoutConfig {
+  horizontalSpacing: number;
+  verticalSpacing: number;
+}
 
 // Give weight for each nodes. The higher the weight is the further it will be on the right-hand
 // side of the graph. In this case we want all the shadow tree to be on the right of the subtrees.
@@ -124,29 +128,48 @@ function reorderLayers(graph: Graph) {
   }
 }
 
-function updateCoordinates(graph: Graph) {
+function updateCoordinates(graph: Graph, config: LayoutConfig) {
   const { nodes, layers } = graph;
+  const { verticalSpacing, horizontalSpacing } = config;
 
-  // Give initial node coordinates
-  for (const node of nodes) {
-    const layerIndex = graph.getLayer(node.id);
-    const indexInLayer = layers[layerIndex].indexOf(node.id);
+  // Give initial node (X,Y) coordinates.
+  // At the end all the nodes in the graph are compacted on the left-hand side.
+  let prevY = 0;
+  for (let layerIndex = 0; layerIndex < layers.length; layerIndex++) {
+    const currentLayerNodes = graph.getNodesInLayer(layerIndex);
 
-    node.x = (NODE_SIZE + HORIZONTAL_SPACING) * indexInLayer;
-    node.y = (NODE_SIZE + VERTICAL_SPACING) * layerIndex;
+    // Get the current layer Y coordinate, by getting the tallest node height and positioning the
+    // current layer relative to the tallest node.
+    const highestNodeInCurrentLayer = currentLayerNodes.reduce(
+      (maxHeight, node) => Math.max(maxHeight, node.height),
+      0
+    );
+    const currentLayerY = prevY + verticalSpacing + highestNodeInCurrentLayer / 2;
+
+    // Assign X coordinate related to the previous nodes in the current layer. Assign Y coordinate
+    // to the computed layer height.
+    let prevX = 0;
+    for (const node of currentLayerNodes) {
+      node.x = prevX + horizontalSpacing + node.width / 2;
+      node.y = currentLayerY;
+
+      prevX = node.x + node.width / 2;
+    }
+
+    // Update the previous layer max Y to prepare for rendering the next layer.
+    prevY = currentLayerY + highestNodeInCurrentLayer / 2;
   }
 
   // Redistribute node coordinates
-  for (let layerIndex = 0; layerIndex < graph.layers.length; layerIndex += 2) {
-    const layer = graph.layers[layerIndex];
-    for (const nodeId of layer) {
-      const node = graph.getNode(nodeId)!;
-      const children = [
-        ...graph.getIncomingEdges(nodeId).map((edge) => graph.getNode(edge.from)!),
-        ...graph.getOutgoingEdges(nodeId).map((edge) => graph.getNode(edge.to)!),
+  for (let layerIndex = 1; layerIndex < graph.layers.length; layerIndex++) {
+    const layerNodes = graph.getNodesInLayer(layerIndex);
+    for (const node of layerNodes) {
+      const connectedNodes = [
+        ...graph.getIncomingEdges(node.id).map((edge) => graph.getNode(edge.from)!),
+        ...graph.getOutgoingEdges(node.id).map((edge) => graph.getNode(edge.to)!),
       ];
 
-      const xMean = children.reduce((acc, child) => acc + child.x, 0) / children.length;
+      const xMean = connectedNodes.reduce((acc, child) => acc + child.x, 0) / connectedNodes.length;
       node.x = xMean;
     }
   }
@@ -214,10 +237,10 @@ function cleanupVirtual(graph: Graph) {
   graph.layers = concreteLayers;
 }
 
-export function layoutGraph(graph: Graph) {
+export function layoutGraph(graph: Graph, config: LayoutConfig) {
   assignToLayers(graph);
   fillLayers(graph);
   reorderLayers(graph);
-  updateCoordinates(graph);
+  updateCoordinates(graph, config);
   cleanupVirtual(graph);
 }

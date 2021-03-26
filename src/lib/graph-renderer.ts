@@ -4,7 +4,13 @@ import { createSvgElement } from "../utils/svg";
 
 import { layoutGraph } from "./graph-layout";
 import { graphFromDomTree, Graph, GraphNodeType, GraphEdgeType } from "./graph";
-import { GRAPH_PADDING, SHADOW_TREE_PADDING, CURVE_TIGHTNESS } from "./graph-constants";
+import {
+  GRAPH_PADDING,
+  SHADOW_TREE_PADDING,
+  CURVE_TIGHTNESS,
+  HORIZONTAL_SPACING,
+  VERTICAL_SPACING,
+} from "./graph-constants";
 
 import { DomTree, EventDispatchingStep } from "./simulator";
 
@@ -305,7 +311,11 @@ export class GraphRenderer {
     this.root.innerHTML = "";
 
     this.graph = graphFromDomTree(tree);
-    layoutGraph(this.graph);
+
+    layoutGraph(this.graph, {
+      horizontalSpacing: HORIZONTAL_SPACING,
+      verticalSpacing: VERTICAL_SPACING,
+    });
 
     renderGraph({
       graph: this.graph,

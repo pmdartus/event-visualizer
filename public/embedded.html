@@ -18,6 +18,17 @@
 
       <template>
         <div id="a">
+          <div id="b"></div>
+          <div id="c" target></div>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
+    <!-- <embedded-event-visualizer eventbubbles eventcomposed>
+      <div slot="footer">Event dispatching in a shadow tree</div>
+
+      <template>
+        <div id="a">
           <div id="b">
             <template shadow-root mode="open">
               <div target></div>
@@ -85,7 +96,7 @@
           <div id="c"></div>
         </div>
       </template>
-    </embedded-event-visualizer>
+    </embedded-event-visualizer> -->
 
     <script src="/dist/embedded.js" type="module"></script>
   </body>
