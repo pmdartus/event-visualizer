@@ -14,11 +14,18 @@ export interface EventDispatchingStep {
 
 const EVENT_NAME = "__TEST_EVENT__";
 
-export function buildDomTree(html: string): DomTree {
-  const tmpl = document.createElement("template");
-  tmpl.innerHTML = html;
+export function buildDomTree(html: string | HTMLTemplateElement): DomTree {
+  let content: DocumentFragment;
 
-  const { content } = tmpl;
+  if (typeof html === "string") {
+    const tmpl = document.createElement("template");
+    tmpl.innerHTML = html;
+
+    content = tmpl.content;
+  } else {
+    content = html.content;
+  }
+
   if (content.children.length !== 1) {
     throw new Error(`Invalid tree. Expect 1 root element but found ${content.children.length}.`);
   }

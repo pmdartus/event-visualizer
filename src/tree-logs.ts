@@ -4,24 +4,13 @@ import { classMap } from "lit-html/directives/class-map";
 import { EventDispatchingStep } from "./lib/simulator";
 import { getEventTargetLabel } from "./utils/label";
 
-export interface EventConfig {
-  bubbles: boolean;
-  composed: boolean;
-}
-
 export type StepChangeEvent = CustomEvent<{ step: number }>;
-export type EventConfigChangeEvent = CustomEvent<{ config: EventConfig }>;
 
 @customElement("tree-logs")
 export class TreeLogs extends LitElement {
-  @property()
-  steps: EventDispatchingStep[] = [];
-
-  @property()
-  activeStep: number = 0;
-
-  @property()
-  eventConfig: EventConfig = { bubbles: true, composed: true };
+  @property() steps: EventDispatchingStep[] = [];
+  @property() activeStep: number = 0;
+  @property() eventConfig!: EventInit;
 
   dispatchStepChange(step: number) {
     const changeStepEvent: StepChangeEvent = new CustomEvent("stepchange", {
@@ -31,118 +20,131 @@ export class TreeLogs extends LitElement {
     this.dispatchEvent(changeStepEvent);
   }
 
-  handleEventConfigChange() {
-    const eventConfigChangeEvent: EventConfigChangeEvent = new CustomEvent("eventconfigchange", {
-      detail: {
-        config: {
-          bubbles: (this.shadowRoot!.querySelector("#bubbles") as HTMLInputElement).checked!,
-          composed: (this.shadowRoot!.querySelector("#composed") as HTMLInputElement).checked!,
-        },
-      },
-    });
-
-    this.dispatchEvent(eventConfigChangeEvent);
-  }
-
   render() {
     const { steps, activeStep, eventConfig } = this;
-
     return html`
-      <section>
-        <input
-          title="Active step"
-          type="range"
-          min="0"
-          max=${steps.length - 1}
-          .value=${activeStep}
-          @input=${(evt: Event) =>
-            this.dispatchStepChange((evt.target as HTMLInputElement).valueAsNumber)}
-        />
+      <ol>
+        ${steps.map((step, i) => {
+          let content;
+          let previousStep: EventDispatchingStep | undefined;
 
-        <input
-          id="bubbles"
-          type="checkbox"
-          .checked=${eventConfig.bubbles}
-          @change=${this.handleEventConfigChange}
-        />
-        <label for="bubbles"><code>bubbles</code></label>
-
-        <input
-          id="composed"
-          type="checkbox"
-          .checked=${eventConfig.composed}
-          @change=${this.handleEventConfigChange}
-        />
-        <label for="composed"><code>composed</code></label>
-      </section>
-
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Step</th>
-            <th scope="col">Current Target</th>
-            <th scope="col">Target</th>
-            <th scope="col">Composed Path</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${steps.map((step, index) => {
-            const previousStep = steps[index - 1];
-
-            const targetChanged = step.target !== previousStep?.target ?? true;
-            const currentTargetChanged = step.currentTarget !== previousStep?.currentTarget ?? true;
-            const composedPathChanged =
-              previousStep?.composedPath.some((node, i) => node !== step.composedPath[i]) ?? true;
-
-            return html`
-              <tr
-                class=${activeStep === index ? "active-step" : ""}
-                @click=${() => this.dispatchStepChange(index)}
-              >
-                <th scope="row">${index + 1}</th>
-                <td class=${classMap({ "property-updated": currentTargetChanged })}>
-                  ${getEventTargetLabel(step.currentTarget)}
-                </td>
-                <td class=${classMap({ "property-updated": targetChanged })}>
-                  ${getEventTargetLabel(step.target)}
-                </td>
-                <td class=${classMap({ "property-updated": composedPathChanged })}>
-                  ${step.composedPath.map((node) => getEventTargetLabel(node)).join(", ")}
-                </td>
-              </tr>
+          if (i === 0) {
+            content = html`
+              <p>
+                Dispatching
+                <code>
+                  new Event({ bubbles: ${eventConfig.bubbles ?? false}, composed:
+                  ${eventConfig.composed ?? false}})
+                </code>
+                on <code>${getEventTargetLabel(step.currentTarget)}</code>.
+              </p>
             `;
-          })}
-        </tbody>
-      </table>
+          } else {
+            content = html`<p>
+              Event propagates to <code>${getEventTargetLabel(step.currentTarget)}</code>.
+            </p>`;
+            previousStep = steps[i - 1];
+          }
+
+          const isEventRetargeted = step.target !== previousStep?.target;
+          if (isEventRetargeted) {
+            content = html`
+              ${content}
+              <p>Target is set to <code>${getEventTargetLabel(step.target)}</code>.</p>
+            `;
+          }
+
+          const isComposedPathUpdated =
+            step.composedPath.length !== previousStep?.composedPath.length ||
+            step.composedPath.some((target, i) => target !== previousStep?.composedPath[i]);
+          if (isComposedPathUpdated) {
+            content = html`
+              ${content}
+              <p>
+                Composed path is set to
+                <code
+                  >[${step.composedPath
+                    .map((eventTarget) => getEventTargetLabel(eventTarget))
+                    .join(", ")}]</code
+                >.
+              </p>
+            `;
+          }
+
+          return html`<li class=${classMap({ active: i === activeStep })}>
+            <button @click=${() => this.dispatchStepChange(i)}>
+              <div class="counter">${i + 1}</div>
+              <div class="description">${content}</div>
+            </button>
+          </li>`;
+        })}
+      </ol>
     `;
   }
 
-  static get styles() {
-    return css`
-      :host {
-        display: block;
-      }
+  static styles = css`
+    :host {
+      display: block;
 
-      input[type="range"] {
-        width: 100%;
-      }
+      --active-step-color: #e0f0ff;
+      --hover-step-color: #e1e8ee;
 
-      table {
-        width: 100%;
-      }
+      --counter-color: #fff;
+      --counter-background-color: #80868b;
+      --active-counter-background-color: #1a73e8;
+    }
 
-      tr:hover {
-        background: #ececec;
-      }
+    ol,
+    li {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
 
-      tr.active-step {
-        background: #c7c7c7;
-      }
+    li button {
+      /* Reset button styles */
+      border: 0;
+      background: inherit;
+      text-align: left;
+      text-decoration: none;
+      font-size: inherit;
+      cursor: pointer;
 
-      td.property-updated {
-        font-weight: bold;
-        color: red;
-      }
-    `;
-  }
+      /* Apply custom button style for list item */
+      width: 100%;
+      display: flex;
+      padding: 0.5em;
+      align-items: center;
+      transition: background 0.3s ease;
+    }
+
+    li.active button {
+      background: var(--active-step-color);
+    }
+
+    li .counter {
+      margin: 0 1em;
+      border-radius: 1em;
+      line-height: 2em;
+      width: 2em;
+      min-width: 2em;
+      font-weight: bold;
+      text-align: center;
+      color: var(--counter-color);
+      background: var(--counter-background-color);
+    }
+
+    li.active .counter {
+      background: var(--active-counter-background-color);
+    }
+
+    li .description {
+      line-height: 1.3em;
+      flex-grow: 1;
+    }
+
+    li .description p {
+      margin: 0.3em;
+    }
+  `;
 }
