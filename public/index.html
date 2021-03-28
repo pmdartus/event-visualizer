@@ -4,24 +4,99 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Event visualizer</title>
-    <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-      }
+    <title>Event Visualizer Embedded</title>
 
-      event-app {
-        width: 100vw;
-        height: 100vh;
+    <style>
+      embedded-event-visualizer {
+        margin-bottom: 2em;
       }
     </style>
   </head>
   <body>
-    <main>
-      <event-app></event-app>
-    </main>
+    <embedded-event-visualizer eventbubbles eventcomposed>
+      <div slot="footer">Event dispatching in a shadow tree</div>
+
+      <template>
+        <div id="a">
+          <div id="b"></div>
+          <div id="c" target></div>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
+    <embedded-event-visualizer eventbubbles eventcomposed>
+      <div slot="footer">Event dispatching in a shadow tree</div>
+
+      <template>
+        <div id="a">
+          <div id="b">
+            <template shadow-root mode="open">
+              <div target></div>
+            </template>
+            <div id="c"></div>
+            <div id="d" target></div>
+          </div>
+          <div id="e">
+            <template shadow-root mode="open">
+              <div target></div>
+            </template>
+            <span></span>
+          </div>
+          <template shadow-root mode="open">
+            <div target></div>
+          </template>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
+    <embedded-event-visualizer eventbubbles eventcomposed>
+      <div slot="footer">Event dispatching in a shadow tree</div>
+
+      <template>
+        <div id="a">
+          <template shadow-root mode="open">
+            <div id="b" target></div>
+          </template>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
+    <embedded-event-visualizer eventcomposed>
+      <div slot="footer">Event dispatching in a nested shadow tree</div>
+
+      <template>
+        <div id="a">
+          <template shadow-root mode="open">
+            <div id="b">
+              <template shadow-root mode="open">
+                <div id="c" target></div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </template>
+    </embedded-event-visualizer>
+
+    <embedded-event-visualizer eventcomposed>
+      <div slot="footer">Event dispatching from slotted content</div>
+
+      <template>
+        <div id="a">
+          <template shadow-root mode="open">
+            <div id="b">
+              <slot></slot>
+            </div>
+            <div id="b">
+              <span></span>
+            </div>
+          </template>
+          <div id="c" target></div>
+          <div id="c" slot="foo"></div>
+          <div id="c" target></div>
+          <div id="c"></div>
+        </div>
+      </template>
+    </embedded-event-visualizer>
 
     <script src="/dist/main.js" type="module"></script>
   </body>

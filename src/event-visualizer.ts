@@ -13,8 +13,8 @@ import {
 
 import type { StepChangeEvent } from "./tree-logs";
 
-@customElement("embedded-event-visualizer")
-export default class EmbeddedEventVisualizer extends LitElement {
+@customElement("event-visualizer")
+export default class EventVisualizer extends LitElement {
   @property({
     attribute: true,
     reflect: true,

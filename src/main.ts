@@ -1,1 +1,1 @@
-import "./app";
+import "./event-visualizer";
