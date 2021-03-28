@@ -15,5 +15,9 @@
 
     // Experimental
     "experimentalDecorators": true,
-  }
+  },
+  "include": [
+    "src/",
+    "typings/"
+  ]
 }

@@ -68,16 +68,16 @@ export class GraphViewer extends LitElement {
         stroke-linecap: round;
       }
 
-      .node__composed-path path {
+      .node__composed-path > path {
         fill: var(--node-composed-path-fill-color);
       }
 
-      .edge__composed-path path {
+      .edge__composed-path > path {
         stroke: var(--node-composed-path-stroke-color);
         stroke-width: 2;
       }
 
-      .node__target path {
+      .node__target > path {
         fill: var(--node-target-fill-color);
       }
     `;

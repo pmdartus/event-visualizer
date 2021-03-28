@@ -1,22 +1,31 @@
 import rough from "roughjs";
 
-import { createSvgElement } from "../utils/svg";
-
-import { layoutGraph } from "./graph-layout";
-import { graphFromDomTree, Graph, GraphNodeType, GraphEdgeType } from "./graph";
+import {
+  graphFromDomTree,
+  Graph,
+  GraphNodeType,
+  GraphEdgeType,
+  GraphNode,
+  GraphEdge,
+} from "./graph";
 import {
   GRAPH_PADDING,
   SHADOW_TREE_PADDING,
   CURVE_TIGHTNESS,
-  HORIZONTAL_SPACING,
-  VERTICAL_SPACING,
+  SHADOW_TREE_CLASS,
+  NODE_CLASS,
+  NODE_ELEMENT_CLASS,
+  NODE_SHADOW_ROOT_CLASS,
+  NODE_LABEL_CLASS,
+  NODE_LABEL_SIZE,
 } from "./graph-constants";
-
 import { DomTree, EventDispatchingStep } from "./simulator";
+
+import { createSvgElement } from "../utils/svg";
 
 type RoughSVG = ReturnType<typeof rough["svg"]>;
 
-function renderShadowContainers({
+function renderShadowTrees({
   graph,
   root,
   rc,
@@ -24,19 +33,17 @@ function renderShadowContainers({
   graph: Graph;
   root: SVGSVGElement;
   rc: RoughSVG;
-}): SVGGElement {
-  const { nodes } = graph;
+}) {
+  for (const nodeId of graph.nodes()) {
+    const node = graph.node(nodeId);
 
-  const shadowTreesContainer = createSvgElement("g");
-  root.appendChild(shadowTreesContainer);
-
-  for (const node of nodes) {
     if (node.type === GraphNodeType.ShadowRoot) {
       const shadowRoot = node.treeNode;
 
-      const containedNodes = nodes
-        .filter((node) => {
-          const { treeNode } = node;
+      const containedNodes = graph
+        .nodes()
+        .filter((nodeId) => {
+          const { treeNode } = graph.node(nodeId);
 
           if (treeNode === null) {
             return false;
@@ -53,11 +60,11 @@ function renderShadowContainers({
 
           return false;
         })
-        .map((node) => {
-          const { treeNode } = node;
+        .map((nodeId) => {
+          const node = graph.node(nodeId);
 
           let depth = 1;
-          let currentRoot = treeNode?.getRootNode();
+          let currentRoot = node.treeNode?.getRootNode();
 
           while (currentRoot !== shadowRoot && currentRoot instanceof ShadowRoot) {
             depth++;
@@ -70,213 +77,174 @@ function renderShadowContainers({
           };
         });
 
-      let containerX1 = Infinity,
-        containerY1 = Infinity;
-      let containerX2 = -Infinity,
-        containerY2 = -Infinity;
+      let minX = Infinity,
+        minY = Infinity;
+      let maxX = -Infinity,
+        maxY = -Infinity;
       let maxDepth = 1;
 
-      for (const containedNode of containedNodes) {
-        containerX1 = Math.min(
-          containedNode.node.x -
-            containedNode.node.width / 2 -
-            containedNode.depth * SHADOW_TREE_PADDING,
-          containerX1
-        );
-        containerY1 = Math.min(
-          containedNode.node.y -
-            containedNode.node.height / 2 -
-            containedNode.depth * SHADOW_TREE_PADDING,
-          containerY1
-        );
-        containerX2 = Math.max(
-          containedNode.node.x +
-            containedNode.node.width / 2 +
-            2 * containedNode.depth * SHADOW_TREE_PADDING,
-          containerX2
-        );
-        containerY2 = Math.max(
-          containedNode.node.y +
-            containedNode.node.height / 2 +
-            2 * containedNode.depth * SHADOW_TREE_PADDING,
-          containerY2
-        );
-        maxDepth = Math.max(containedNode.depth, maxDepth);
+      for (const { node, depth } of containedNodes) {
+        minX = Math.min(minX, node.x - node.width / 2);
+        minY = Math.min(minY, node.y - node.height / 2);
+        maxX = Math.max(maxX, node.x + node.width / 2);
+        maxY = Math.max(maxY, node.y + node.height / 2);
+        maxDepth = Math.max(depth, maxDepth);
       }
 
       const rect = rc.rectangle(
-        containerX1,
-        containerY1,
-        containerX2 - containerX1,
-        containerY2 - containerY1,
+        minX - maxDepth * SHADOW_TREE_PADDING,
+        minY - maxDepth * SHADOW_TREE_PADDING,
+        maxX - minX + 2 * maxDepth * SHADOW_TREE_PADDING,
+        maxY - minY + 2 * maxDepth * SHADOW_TREE_PADDING,
         {
           fill: "rgba(100, 100, 100, 0.2)",
           stroke: "rgb(80, 80, 80)",
           fillStyle: "solid",
         }
       );
-      shadowTreesContainer.appendChild(rect);
+
+      rect.classList.add(SHADOW_TREE_CLASS);
+
+      root.appendChild(rect);
     }
   }
-
-  return shadowTreesContainer;
 }
 
-function renderNodes({
-  graph,
+function renderNode({
+  id,
+  node,
+  rc,
+  root,
+}: {
+  id: string;
+  node: GraphNode;
+  rc: RoughSVG;
+  root: SVGElement;
+}) {
+  const rect = rc.rectangle(
+    node.x - node.width / 2,
+    node.y - node.height / 2,
+    node.width,
+    node.height,
+    {
+      fill: "#FFF",
+      fillStyle: "solid",
+    }
+  );
+  rect.setAttribute("data-graph-id", id);
+  rect.setAttribute(
+    "class",
+    `${NODE_CLASS} ${
+      node.type === GraphNodeType.Element ? NODE_ELEMENT_CLASS : NODE_SHADOW_ROOT_CLASS
+    }`
+  );
+
+  root.appendChild(rect);
+
+  const text = createSvgElement("text");
+  text.setAttribute("x", String(node.x));
+  text.setAttribute("y", String(node.y));
+  text.setAttribute("alignment-baseline", "central");
+  text.setAttribute("text-anchor", "middle");
+  text.textContent =
+    node.type === GraphNodeType.Element
+      ? `<${(node.treeNode as Element).tagName.toLocaleLowerCase()}>`
+      : "#root";
+
+  rect.appendChild(text);
+
+  if (node.type === GraphNodeType.Element) {
+    const label = (node.treeNode as Element).getAttribute("id");
+
+    if (label) {
+      renderNodeLabel({
+        label,
+        node,
+        rc,
+        root: rect,
+      });
+    }
+  }
+}
+
+function renderNodeLabel({
+  label,
+  node,
   root,
   rc,
 }: {
-  graph: Graph;
-  root: SVGSVGElement;
+  label: string;
+  node: GraphNode;
   rc: RoughSVG;
-}): SVGGElement {
-  const { nodes } = graph;
-
-  const nodesContainer = createSvgElement("g");
-  root.appendChild(nodesContainer);
-
-  for (const node of nodes) {
-    if (node.type !== GraphNodeType.Virtual) {
-      const rect = rc.rectangle(
-        node.x - node.width / 2,
-        node.y - node.height / 2,
-        node.width,
-        node.height,
-        {
-          fill: "#FFF",
-          fillStyle: "solid",
-        }
-      );
-      rect.setAttribute("data-graph-id", node.id);
-
-      rect.classList.add("node");
-      if (node.type === GraphNodeType.Element) {
-        rect.classList.add("node__element");
-      } else if (node.type === GraphNodeType.ShadowRoot) {
-        rect.classList.add("node__shadow-root");
-      }
-
-      nodesContainer.appendChild(rect);
-
-      const text = createSvgElement("text");
-      text.setAttribute("x", String(node.x));
-      text.setAttribute("y", String(node.y));
-      text.setAttribute("alignment-baseline", "central");
-      text.setAttribute("text-anchor", "middle");
-
-      text.classList.add("node-label");
-
-      if (node.treeNode instanceof Element) {
-        text.textContent = `<${node.treeNode.tagName.toLocaleLowerCase()}>`;
-      } else {
-        text.textContent = `#root`;
-      }
-
-      nodesContainer.appendChild(text);
-
-      if (node.treeNode instanceof Element) {
-        const id = node.treeNode.getAttribute("id");
-
-        if (id) {
-          const idLabel = createSvgElement("text");
-          idLabel.textContent = id;
-          idLabel.setAttribute("x", String(node.x + node.width / 2));
-          idLabel.setAttribute("y", String(node.y - node.height / 2));
-          idLabel.setAttribute("alignment-baseline", "central");
-          idLabel.setAttribute("text-anchor", "middle");
-
-          // Text has to be inserted before computing the text length.
-          nodesContainer.appendChild(idLabel);
-          const textLength = idLabel.getComputedTextLength();
-
-          const idBox = rc.rectangle(
-            node.x + node.width / 2 - textLength - 5,
-            node.y - node.height / 2 - 10,
-            textLength + 15,
-            20,
-            {
-              fill: "#a9d2f7",
-              fillStyle: "solid",
-            }
-          );
-
-          nodesContainer.insertBefore(idBox, idLabel);
-        }
-      }
+  root: SVGElement;
+}) {
+  const labelContainer = rc.rectangle(
+    node.x + node.width / 2 - NODE_LABEL_SIZE / 2,
+    node.y - node.height / 2 - NODE_LABEL_SIZE / 2,
+    NODE_LABEL_SIZE,
+    NODE_LABEL_SIZE,
+    {
+      fill: "#a9d2f7",
+      fillStyle: "solid",
     }
-  }
+  );
+  labelContainer.setAttribute("class", NODE_LABEL_CLASS);
 
-  return nodesContainer;
+  root.append(labelContainer);
+
+  const labelText = createSvgElement("text");
+  labelText.textContent = label;
+  labelText.setAttribute("x", String(node.x + node.width / 2));
+  labelText.setAttribute("y", String(node.y - node.height / 2));
+  labelText.setAttribute("alignment-baseline", "central");
+  labelText.setAttribute("text-anchor", "middle");
+
+  labelContainer.append(labelText);
 }
 
-function renderEdges({
-  graph,
+function renderEdge({
+  edge,
+  from,
+  to,
   root,
   rc,
 }: {
-  graph: Graph;
-  root: SVGSVGElement;
+  edge: GraphEdge;
+  from: string;
+  to: string;
   rc: RoughSVG;
-}): SVGGElement {
-  const { edges } = graph;
+  root: SVGElement;
+}) {
+  const path: [number, number][] = edge.points.map((point) => [point.x, point.y]);
+  const line = rc.curve(path, {
+    curveTightness: CURVE_TIGHTNESS,
+  });
 
-  const edgesContainer = createSvgElement("g");
-  root.appendChild(edgesContainer);
-
-  for (const edge of edges) {
-    const line = rc.curve(edge.path, {
-      curveTightness: CURVE_TIGHTNESS,
-    });
-
-    line.classList.add("edge");
-    if (edge.type === GraphEdgeType.Child) {
-      line.classList.add("edge__child");
-    } else if (edge.type === GraphEdgeType.ShadowRoot) {
-      line.classList.add("edge__shadow-root");
-    } else if (edge.type === GraphEdgeType.AssignedElement) {
-      line.classList.add("edge__assigned-element");
-    }
-
-    line.dataset.from = graph.getNode(edge.from)!.id;
-    line.dataset.to = graph.getNode(edge.to)!.id;
-
-    edgesContainer.appendChild(line);
+  line.classList.add("edge");
+  if (edge.type === GraphEdgeType.Child) {
+    line.classList.add("edge__child");
+  } else if (edge.type === GraphEdgeType.ShadowRoot) {
+    line.classList.add("edge__shadow-root");
+  } else if (edge.type === GraphEdgeType.AssignedElement) {
+    line.classList.add("edge__assigned-element");
   }
 
-  return edgesContainer;
+  line.dataset.from = from;
+  line.dataset.to = to;
+
+  root.appendChild(line);
 }
 
-function updateViewBox({
-  root,
-  nodesContainer,
-  shadowTreesContainer,
-}: {
-  root: SVGSVGElement;
-  nodesContainer: SVGGElement;
-  shadowTreesContainer: SVGGElement;
-}): void {
-  const nodesContainerBBox = nodesContainer.getBBox();
-  const shadowTreesContainerBBox = shadowTreesContainer.getBBox();
-
-  const viewBoxX1 = Math.min(nodesContainerBBox.x, shadowTreesContainerBBox.x);
-  const viewBoxY1 = Math.min(nodesContainerBBox.y, shadowTreesContainerBBox.y);
-  const viewBoxX2 = Math.max(
-    nodesContainerBBox.x + nodesContainerBBox.width,
-    shadowTreesContainerBBox.x + shadowTreesContainerBBox.width
-  );
-  const viewBoxY2 = Math.max(
-    nodesContainerBBox.y + nodesContainerBBox.height,
-    shadowTreesContainerBBox.y + shadowTreesContainerBBox.height
-  );
+function updateViewBox(root: SVGSVGElement): void {
+  const rootBBox = root.getBBox();
 
   root.setAttribute(
     "viewBox",
     [
-      Math.floor(viewBoxX1 - GRAPH_PADDING),
-      Math.floor(viewBoxY1 - GRAPH_PADDING),
-      Math.ceil(viewBoxX2 + 2 * GRAPH_PADDING),
-      Math.ceil(viewBoxY2 + 2 * GRAPH_PADDING),
+      Math.floor(rootBBox.x - GRAPH_PADDING),
+      Math.floor(rootBBox.y - GRAPH_PADDING),
+      Math.ceil(rootBBox.x + rootBBox.width + 2 * GRAPH_PADDING),
+      Math.ceil(rootBBox.y + rootBBox.height + 2 * GRAPH_PADDING),
     ].join(" ")
   );
 }
@@ -290,17 +258,26 @@ function renderGraph({
   root: SVGSVGElement;
   rc: RoughSVG;
 }): void {
-  const shadowTreesContainer = renderShadowContainers({ graph, root, rc });
-  const nodesContainer = renderNodes({ graph, root, rc });
-  renderEdges({ graph, root, rc });
+  renderShadowTrees({ graph, root, rc });
 
-  updateViewBox({ root, shadowTreesContainer, nodesContainer });
+  for (const id of graph.nodes()) {
+    const node = graph.node(id);
+    renderNode({ id, node, root, rc });
+  }
+
+  for (const graphEdge of graph.edges()) {
+    const edge = graph.edge(graphEdge);
+    const { v: from, w: to } = graphEdge;
+    renderEdge({ from, to, edge, root, rc });
+  }
+
+  updateViewBox(root);
 }
 
 export class GraphRenderer {
   private root: SVGSVGElement;
   private rc: RoughSVG;
-  private graph: Graph = new Graph();
+  private graph?: Graph;
 
   constructor({ root }: { root: SVGSVGElement }) {
     this.root = root;
@@ -312,11 +289,6 @@ export class GraphRenderer {
 
     this.graph = graphFromDomTree(tree);
 
-    layoutGraph(this.graph, {
-      horizontalSpacing: HORIZONTAL_SPACING,
-      verticalSpacing: VERTICAL_SPACING,
-    });
-
     renderGraph({
       graph: this.graph,
       root: this.root,
@@ -327,55 +299,32 @@ export class GraphRenderer {
   setStep(step: EventDispatchingStep) {
     const { root, graph } = this;
 
+    if (!graph) {
+      return;
+    }
+
     const { target, currentTarget, composedPath } = step;
-    const composedPathId = composedPath.map((domNode) => {
-      return graph.nodes.find((node) => node.treeNode === domNode)!.id;
-    });
 
     for (const svgNode of Array.from(root.querySelectorAll(".node"))) {
-      const graphId = svgNode.getAttribute("data-graph-id");
-      const graphNode = graph.nodes.find((node) => node.id === graphId)!;
+      const nodeId = svgNode.getAttribute("data-graph-id");
+      const node = graph.node(nodeId!);
 
-      if (graphNode.treeNode === target) {
+      if (node.treeNode === target) {
         svgNode.classList.add("node__target");
       } else {
         svgNode.classList.remove("node__target");
       }
 
-      if (graphNode.treeNode === currentTarget) {
+      if (node.treeNode === currentTarget) {
         svgNode.classList.add("node__current-target");
       } else {
         svgNode.classList.remove("node__current-target");
       }
 
-      if (composedPath.includes(graphNode.treeNode!)) {
+      if (composedPath.includes(node.treeNode!)) {
         svgNode.classList.add("node__composed-path");
       } else {
         svgNode.classList.remove("node__composed-path");
-      }
-    }
-
-    for (const svgEdge of Array.from(root.querySelectorAll(".edge"))) {
-      const { from: fromId, to: toId } = (svgEdge as SVGElement).dataset;
-
-      let isInComposedPath = false;
-
-      // Traverse the composed path in reverse order as it list the nodes from the leaf to the root
-      // when edges are directed from the root to the leaf nodes.
-      for (let i = composedPathId.length - 1; i > 0; i--) {
-        const currentId = composedPathId[i];
-        const nextId = composedPathId[i - 1];
-
-        if (fromId === currentId && toId === nextId) {
-          isInComposedPath = true;
-          break;
-        }
-      }
-
-      if (isInComposedPath) {
-        svgEdge.classList.add("edge__composed-path");
-      } else {
-        svgEdge.classList.remove("edge__composed-path");
       }
     }
   }

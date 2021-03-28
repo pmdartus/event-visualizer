@@ -1,12 +1,11 @@
-import { NODE_SIZE } from "./graph-constants";
-import { DomTree, TreeNode } from "./simulator";
+import dagre, { graphlib, Node, GraphEdge as Edge } from "dagre";
 
-export type GraphNodeId = string;
+import { DomTree, TreeNode } from "./simulator";
+import { GRAPH_PADDING, HORIZONTAL_SPACING, NODE_SIZE, VERTICAL_SPACING } from "./graph-constants";
 
 export enum GraphNodeType {
   Element,
   ShadowRoot,
-  Virtual,
 }
 
 export enum GraphEdgeType {
@@ -15,81 +14,28 @@ export enum GraphEdgeType {
   AssignedElement,
 }
 
-export type Point = [number, number];
-
-export interface GraphNode {
-  id: GraphNodeId;
+interface NodeData {
   type: GraphNodeType;
-  treeNode: TreeNode | null;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  treeNode: TreeNode;
 }
 
-export interface GraphEdge {
-  type: GraphEdgeType;
-  from: GraphNodeId;
-  to: GraphNodeId;
-  path: Point[];
-}
-
-export type Layer = GraphNodeId[];
-
-export class Graph {
-  nodes: GraphNode[] = [];
-  edges: GraphEdge[] = [];
-  layers: Layer[] = [];
-
-  createNode(config: Partial<GraphNode> & Pick<GraphNode, "id" | "type" | "treeNode">): GraphNode {
-    const node = {
-      x: 0,
-      y: 0,
-      width: NODE_SIZE,
-      height: NODE_SIZE,
-      ...config,
-    };
-
-    this.nodes.push(node);
-    return node;
-  }
-
-  createEdge(config: Partial<GraphEdge> & Pick<GraphEdge, "type" | "from" | "to">): GraphEdge {
-    const edge = {
-      path: [],
-      ...config,
-    };
-
-    this.edges.push(edge);
-    return edge;
-  }
-
-  getNode(id: GraphNodeId): GraphNode | undefined {
-    return this.nodes.find((node) => node.id === id);
-  }
-
-  getOutgoingEdges(id: GraphNodeId): GraphEdge[] {
-    return this.edges.filter((edge) => edge.from === id);
-  }
-
-  getIncomingEdges(id: GraphNodeId): GraphEdge[] {
-    return this.edges.filter((edge) => edge.to === id);
-  }
-
-  getLayer(id: GraphNodeId): number {
-    return this.layers.findIndex((layer) => layer.includes(id));
-  }
-
-  getNodesInLayer(layerIndex: number): GraphNode[] {
-    return this.layers[layerIndex].map((nodeId) => this.getNode(nodeId)!);
-  }
-}
+export type Graph = graphlib.Graph<NodeData>;
+export type GraphNode = Node<NodeData>;
+export type GraphEdge = Edge;
 
 export function graphFromDomTree(domTree: DomTree): Graph {
-  const graph = new Graph();
+  const graph: Graph = new graphlib.Graph({});
+
+  graph.setGraph({
+    nodesep: HORIZONTAL_SPACING,
+    ranksep: VERTICAL_SPACING,
+    marginx: GRAPH_PADDING,
+    marginy: GRAPH_PADDING,
+  });
 
   const treeNodeToId: Map<TreeNode, string> = new Map();
 
+  // Insert nodes in graph
   for (let index = 0; index < domTree.nodes.length; index++) {
     const treeNode = domTree.nodes[index];
 
@@ -97,22 +43,22 @@ export function graphFromDomTree(domTree: DomTree): Graph {
     const type = treeNode instanceof Element ? GraphNodeType.Element : GraphNodeType.ShadowRoot;
 
     treeNodeToId.set(treeNode, id);
-    graph.createNode({
-      id,
+    graph.setNode(id, {
       type,
       treeNode,
+      width: NODE_SIZE,
+      height: NODE_SIZE,
     });
   }
 
+  // Insert edges in graph
   for (const treeNode of domTree.nodes) {
     const id = treeNodeToId.get(treeNode)!;
 
     for (const childTreeNode of Array.from(treeNode.children)) {
       const childId = treeNodeToId.get(childTreeNode)!;
 
-      graph.createEdge({
-        from: id,
-        to: childId,
+      graph.setEdge(id, childId, {
         type: GraphEdgeType.Child,
       });
     }
@@ -121,9 +67,7 @@ export function graphFromDomTree(domTree: DomTree): Graph {
       for (const assignedElement of treeNode.assignedElements()) {
         const assignedElementId = treeNodeToId.get(assignedElement)!;
 
-        graph.createEdge({
-          from: id,
-          to: assignedElementId,
+        graph.setEdge(id, assignedElementId, {
           type: GraphEdgeType.AssignedElement,
         });
       }
@@ -132,13 +76,14 @@ export function graphFromDomTree(domTree: DomTree): Graph {
     if (treeNode instanceof ShadowRoot) {
       const hostElementId = treeNodeToId.get(treeNode.host)!;
 
-      graph.createEdge({
-        from: hostElementId,
-        to: id,
+      graph.setEdge(hostElementId, id, {
         type: GraphEdgeType.ShadowRoot,
       });
     }
   }
+
+  // Finally layout graph
+  dagre.layout(graph);
 
   return graph;
 }
