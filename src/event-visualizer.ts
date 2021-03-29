@@ -1,8 +1,8 @@
 import { LitElement, html, css, property, customElement, PropertyValues } from "lit-element";
 
-import "./graph-viewer";
+import "./event-graph";
 import "./player-controls";
-import "./tree-logs";
+import "./event-steps";
 
 import {
   buildDomTree,
@@ -11,7 +11,7 @@ import {
   simulateDispatchEvent,
 } from "./lib/simulator";
 
-import type { StepChangeEvent } from "./tree-logs";
+import type { StepChangeEvent } from "./event-steps";
 
 @customElement("event-visualizer")
 export default class EventVisualizer extends LitElement {
@@ -33,19 +33,6 @@ export default class EventVisualizer extends LitElement {
   @property() steps: EventDispatchingStep[] = [];
   @property() activeStep: number = 0;
 
-  connectedCallback() {
-    super.connectedCallback();
-
-    this.shadowRoot?.addEventListener("slotchange", (evt) => {
-      const slotName = (evt.target as HTMLSlotElement).name;
-
-      if (slotName === "") {
-        this.computeTree();
-        this.computeEventDispatchingStep();
-      }
-    });
-  }
-
   get eventConfig(): EventInit {
     return {
       bubbles: this.eventbubbles,
@@ -53,11 +40,20 @@ export default class EventVisualizer extends LitElement {
     };
   }
 
+  handleTreeChange() {
+    this.computeTree();
+    this.computeEventDispatchingStep();
+  }
+
   computeTree() {
     const template = this.querySelector("template");
 
     if (template) {
-      this.tree = buildDomTree(template);
+      try {
+        this.tree = buildDomTree(template);
+      } catch (error) {
+        console.warn(`Invalid event tree: ${error.message}`);
+      }
     }
   }
 
@@ -85,16 +81,16 @@ export default class EventVisualizer extends LitElement {
 
   render() {
     return html`
-      <div id="main">
-        <div id="left-panel">
-          <graph-viewer
+      <div class="main">
+        <div class="left-panel">
+          <event-graph
             .tree=${this.tree}
             .steps=${this.steps}
             .activeStep=${this.activeStep}
-          ></graph-viewer>
+          ></event-graph>
         </div>
 
-        <div id="right-panel">
+        <div class="right-panel">
           Event configuration:
           <input
             id="bubbles"
@@ -120,60 +116,70 @@ export default class EventVisualizer extends LitElement {
             @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
           ></player-controls>
 
-          <tree-logs
+          <event-steps
             .steps=${this.steps}
             .activeStep=${this.activeStep}
             .eventConfig=${{ bubbles: this.eventbubbles, composed: this.eventcomposed }}
             @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
-          ></tree-logs>
+          ></event-steps>
         </div>
       </div>
 
-      <slot hidden></slot>
+      <slot @slotchange=${this.handleTreeChange}></slot>
 
-      <slot id="footer" name="footer"></slot>
+      <slot class="footer" name="footer"></slot>
     `;
   }
 
   static styles = css`
     :host {
-      --font-family: arial, sans-serif;
-      --font-color: #212121;
-
       --border-color: #eee;
       --padding-size: 0.5em;
 
-      font-family: var(--font-family);
-      color: var(--font-color);
+      font-family: arial, sans-serif;
+      color: #212121;
+      background-color: #fff;
+
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
 
       display: flex;
       flex-direction: column;
-
-      border: 1px solid var(--border-color);
-      border-radius: 3px;
     }
 
-    #main {
+    .main {
       display: flex;
-    }
-
-    #footer {
-      display: block;
-      border-top: 1px solid var(--border-color);
       padding: var(--padding-size);
     }
 
-    #left-panel {
+    .left-panel {
       flex-grow: 1;
+      max-height: 500px;
     }
 
-    player-controls {
+    .right-panel {
+      width: 400px;
+    }
+
+    @media (max-width: 600px) {
+      .main {
+        flex-direction: column;
+      }
+
+      .right-panel {
+        width: 100%;
+      }
+    }
+
+    player-controls,
+    event-steps {
       margin-top: 0.5em;
     }
 
-    tree-logs {
-      width: 500px;
-      margin-top: 1.5em;
+    .footer {
+      display: block;
+      border-top: 1px solid var(--border-color);
+      padding: var(--padding-size);
     }
   `;
 }

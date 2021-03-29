@@ -14,18 +14,7 @@ export interface EventDispatchingStep {
 
 const EVENT_NAME = "__TEST_EVENT__";
 
-export function buildDomTree(html: string | HTMLTemplateElement): DomTree {
-  let content: DocumentFragment;
-
-  if (typeof html === "string") {
-    const tmpl = document.createElement("template");
-    tmpl.innerHTML = html;
-
-    content = tmpl.content;
-  } else {
-    content = html.content;
-  }
-
+export function buildDomTree({ content }: HTMLTemplateElement): DomTree {
   if (content.children.length !== 1) {
     throw new Error(`Invalid tree. Expect 1 root element but found ${content.children.length}.`);
   }

@@ -21,7 +21,7 @@ import {
 } from "./graph-constants";
 import { DomTree, EventDispatchingStep } from "./simulator";
 
-import { createSvgElement } from "../utils/svg";
+import { createSvgElement } from "./svg";
 
 type RoughSVG = ReturnType<typeof rough["svg"]>;
 

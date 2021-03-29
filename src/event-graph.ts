@@ -3,8 +3,8 @@ import { LitElement, customElement, html, css, property, PropertyValues } from "
 import { GraphRenderer } from "./lib/graph-renderer";
 import { DomTree, EventDispatchingStep } from "./lib/simulator";
 
-@customElement("graph-viewer")
-export class GraphViewer extends LitElement {
+@customElement("event-graph")
+export class EventGraph extends LitElement {
   @property() tree!: DomTree;
   @property() steps!: EventDispatchingStep[];
   @property() activeStep!: number;
@@ -38,6 +38,8 @@ export class GraphViewer extends LitElement {
         display: block;
 
         --max-height: 500px;
+
+        --node-current-target-fill-color: #1a73e8;
 
         --node-target-fill-color: #ffa224;
         --node-target-stroke-color: #e4d60f;
@@ -74,7 +76,10 @@ export class GraphViewer extends LitElement {
 
       .edge__composed-path > path {
         stroke: var(--node-composed-path-stroke-color);
-        stroke-width: 2;
+      }
+
+      .node__current-target > path {
+        stroke: var(--node-current-target-fill-color);
       }
 
       .node__target > path {

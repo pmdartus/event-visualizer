@@ -2,12 +2,25 @@ import { LitElement, html, css, property, customElement } from "lit-element";
 import { classMap } from "lit-html/directives/class-map";
 
 import { EventDispatchingStep } from "./lib/simulator";
-import { getEventTargetLabel } from "./utils/label";
 
 export type StepChangeEvent = CustomEvent<{ step: number }>;
 
-@customElement("tree-logs")
-export class TreeLogs extends LitElement {
+function getEventTargetLabel(target: EventTarget): string {
+  if (target instanceof Element) {
+    let label = target.tagName.toLocaleLowerCase();
+    if (target.hasAttribute("id")) {
+      label += `#${target.getAttribute("id")}`;
+    }
+    return label;
+  } else if (target instanceof ShadowRoot) {
+    return "[shadow-root]";
+  }
+
+  throw new Error(`Unknown event target. Can't compute a label for it`);
+}
+
+@customElement("event-steps")
+export class EventSteps extends LitElement {
   @property() steps: EventDispatchingStep[] = [];
   @property() activeStep: number = 0;
   @property() eventConfig!: EventInit;
