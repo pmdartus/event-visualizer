@@ -3,6 +3,9 @@
     // Project options
     "target": "ESNext",
     "lib": ["esnext", "dom"],
+    "outDir": "lib",
+    "sourceMap": true,
+    "declaration": true,
     
     // Type check
     "strict": true,

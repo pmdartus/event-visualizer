@@ -1,5 +1,7 @@
 import rough from "roughjs";
 
+import { DomTree, EventDispatchingStep } from "../simulator.js";
+
 import {
   graphFromDomTree,
   Graph,
@@ -7,7 +9,7 @@ import {
   GraphEdgeType,
   GraphNode,
   GraphEdge,
-} from "./graph";
+} from "./graph.js";
 import {
   GRAPH_PADDING,
   SHADOW_TREE_PADDING,
@@ -18,10 +20,8 @@ import {
   NODE_SHADOW_ROOT_CLASS,
   NODE_LABEL_CLASS,
   NODE_LABEL_SIZE,
-} from "./graph-constants";
-import { DomTree, EventDispatchingStep } from "./simulator";
-
-import { createSvgElement } from "./svg";
+} from "./graph-constants.js";
+import { createSvgElement } from "./svg.js";
 
 type RoughSVG = ReturnType<typeof rough["svg"]>;
 

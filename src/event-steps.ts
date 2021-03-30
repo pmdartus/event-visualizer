@@ -1,7 +1,7 @@
 import { LitElement, html, css, property, customElement } from "lit-element";
 import { classMap } from "lit-html/directives/class-map";
 
-import { EventDispatchingStep } from "./lib/simulator";
+import { EventDispatchingStep } from "./simulator.js";
 
 export type StepChangeEvent = CustomEvent<{ step: number }>;
 

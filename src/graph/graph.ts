@@ -1,7 +1,13 @@
 import dagre, { graphlib, Node, GraphEdge as Edge } from "dagre";
 
-import { DomTree, TreeNode } from "./simulator";
-import { GRAPH_PADDING, HORIZONTAL_SPACING, NODE_SIZE, VERTICAL_SPACING } from "./graph-constants";
+import { DomTree, TreeNode } from "../simulator.js";
+
+import {
+  GRAPH_PADDING,
+  HORIZONTAL_SPACING,
+  NODE_SIZE,
+  VERTICAL_SPACING,
+} from "./graph-constants.js";
 
 export enum GraphNodeType {
   Element,
