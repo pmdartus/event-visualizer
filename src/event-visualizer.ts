@@ -1,51 +1,39 @@
 import { LitElement, html, css, property, customElement, PropertyValues } from "lit-element";
 
-import "./event-graph";
-import "./player-controls";
-import "./event-steps";
+import "./event-graph.js";
+import "./player-controls.js";
+import "./event-steps.js";
 
-import {
-  buildDomTree,
-  DomTree,
-  EventDispatchingStep,
-  simulateDispatchEvent,
-} from "./lib/simulator";
+import { buildDomTree, DomTree, EventDispatchingStep, simulateDispatchEvent } from "./simulator.js";
 
 import type { StepChangeEvent } from "./event-steps";
 
 @customElement("event-visualizer")
 export default class EventVisualizer extends LitElement {
   @property({
-    attribute: true,
+    attribute: "event-bubbles",
     reflect: true,
     type: Boolean,
   })
-  eventbubbles = false;
+  eventBubbles = false;
 
   @property({
-    attribute: true,
+    attribute: "event-composed",
     reflect: true,
     type: Boolean,
   })
-  eventcomposed = false;
+  eventComposed = false;
 
-  @property() tree?: DomTree;
-  @property() steps: EventDispatchingStep[] = [];
-  @property() activeStep: number = 0;
+  @property() protected tree?: DomTree;
+  @property() protected steps: EventDispatchingStep[] = [];
+  @property() protected activeStep: number = 0;
 
-  get eventConfig(): EventInit {
-    return {
-      bubbles: this.eventbubbles,
-      composed: this.eventcomposed,
-    };
-  }
-
-  handleTreeChange() {
+  protected handleTreeChange() {
     this.computeTree();
     this.computeEventDispatchingStep();
   }
 
-  computeTree() {
+  protected computeTree() {
     const template = this.querySelector("template");
 
     if (template) {
@@ -57,8 +45,8 @@ export default class EventVisualizer extends LitElement {
     }
   }
 
-  computeEventDispatchingStep() {
-    const { tree, eventConfig } = this;
+  protected computeEventDispatchingStep() {
+    const { tree } = this;
 
     if (!tree) {
       return;
@@ -66,20 +54,23 @@ export default class EventVisualizer extends LitElement {
 
     const steps = simulateDispatchEvent({
       tree,
-      eventConfig,
+      eventConfig: {
+        bubbles: this.eventBubbles,
+        composed: this.eventComposed,
+      },
     });
 
     this.steps = steps;
     this.activeStep = 0;
   }
 
-  updated(props: PropertyValues) {
+  protected updated(props: PropertyValues) {
     if (props.has("eventcomposed") || props.has("eventbubbles")) {
       this.computeEventDispatchingStep();
     }
   }
 
-  render() {
+  protected render() {
     return html`
       <div class="main">
         <div class="left-panel">
@@ -95,18 +86,18 @@ export default class EventVisualizer extends LitElement {
           <input
             id="bubbles"
             type="checkbox"
-            .checked=${this.eventbubbles}
+            .checked=${this.eventBubbles}
             @change=${(evt: Event) =>
-              (this.eventbubbles = (evt.target as HTMLInputElement).checked)}
+              (this.eventBubbles = (evt.target as HTMLInputElement).checked)}
           />
           <label for="bubbles">bubbles</label>
 
           <input
             id="composed"
             type="checkbox"
-            .checked=${this.eventcomposed}
+            .checked=${this.eventComposed}
             @change=${(evt: Event) =>
-              (this.eventcomposed = (evt.target as HTMLInputElement).checked)}
+              (this.eventComposed = (evt.target as HTMLInputElement).checked)}
           />
           <label for="composed">composed</label>
 
@@ -119,7 +110,7 @@ export default class EventVisualizer extends LitElement {
           <event-steps
             .steps=${this.steps}
             .activeStep=${this.activeStep}
-            .eventConfig=${{ bubbles: this.eventbubbles, composed: this.eventcomposed }}
+            .eventConfig=${{ bubbles: this.eventBubbles, composed: this.eventComposed }}
             @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
           ></event-steps>
         </div>

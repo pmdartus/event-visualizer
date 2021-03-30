@@ -1,27 +1,37 @@
 {
-  "name": "eventing-visualizer",
-  "version": "1.0.0",
+  "name": "@pmdartus/event-visualizer",
+  "version": "0.1.0",
   "description": "",
+  "type": "module",
+  "keywords": [
+    "event",
+    "shadow-dom",
+    "web-component"
+  ],
+  "author": "Pierre-Marie Dartus <pm@dartus.fr>",
+  "license": "MIT",
   "scripts": {
     "start": "snowpack dev",
-    "prebuild": "tsc --noEmit",
-    "build": "snowpack build",
+    "build": "tsc && snowpack build",
     "format": "prettier --write '{public,src}/**/*.{js,ts,html,css,md}'",
     "format:check": "prettier --check '{public,src}/**/*.{js,ts,html,css,md}'"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "dagre": "^0.8.5",
+    "lit-element": "^2.4.0",
+    "roughjs": "^4.3.1"
+  },
+  "devDependencies": {
     "husky": "^4.3.8",
     "lint-staged": "^10.5.4",
-    "lit-element": "^2.4.0",
     "prettier": "^2.2.1",
-    "roughjs": "^4.3.1",
     "snowpack": "^3.0.13",
     "typescript": "^4.2.3"
   },
+  "files": [
+    "lib",
+    "dist"
+  ],
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
