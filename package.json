@@ -1,8 +1,7 @@
 {
   "name": "@pmdartus/event-visualizer",
   "version": "0.1.0",
-  "description": "",
-  "type": "module",
+  "description": "Visualize of event propagation in the shadow DOM",
   "keywords": [
     "event",
     "shadow-dom",
@@ -10,6 +9,20 @@
   ],
   "author": "Pierre-Marie Dartus <pm@dartus.fr>",
   "license": "MIT",
+  "type": "module",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "module": "./lib/main.js",
+  "exports": {
+    "import": "./lib/main.js"
+  },
+  "types": "./lib/main.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pmdartus/event-visualizer"
+  },
   "scripts": {
     "start": "snowpack dev",
     "build": "tsc && snowpack build",
@@ -28,10 +41,6 @@
     "snowpack": "^3.0.13",
     "typescript": "^4.2.3"
   },
-  "files": [
-    "lib",
-    "dist"
-  ],
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
