@@ -1,6 +1,6 @@
 {
   "name": "@pmdartus/event-visualizer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Visualize of event propagation in the shadow DOM",
   "keywords": [
     "event",
