@@ -36,29 +36,17 @@ export class EventGraph extends LitElement {
     return css`
       :host {
         display: block;
-
-        --max-height: 500px;
-
-        --node-current-target-fill-color: #1a73e8;
-
-        --node-target-fill-color: #ffa224;
-        --node-target-stroke-color: #e4d60f;
-
-        --node-composed-path-fill-color: #f3ea71;
-        --node-composed-path-stroke-color: #c49000;
-
-        --edge-stroke-color: #505050;
       }
 
       svg {
         width: 100%;
         height: 100%;
-        max-height: var(--max-height);
+        max-height: 500px;
         font-family: monospace;
       }
 
       .edge path {
-        stroke: var(--edge-stroke-color);
+        stroke: #505050;
       }
 
       .edge__shadow-root {
@@ -71,19 +59,20 @@ export class EventGraph extends LitElement {
       }
 
       .node__composed-path > path {
-        fill: var(--node-composed-path-fill-color);
+        fill: #f3ea71;
       }
 
-      .edge__composed-path > path {
-        stroke: var(--node-composed-path-stroke-color);
+      .pointer {
+        fill: white;
+        transition: transform 0.5s;
       }
 
-      .node__current-target > path {
-        stroke: var(--node-current-target-fill-color);
+      .pointer__event > path {
+        fill: red;
       }
 
-      .node__target > path {
-        fill: var(--node-target-fill-color);
+      .pointer__target > path {
+        fill: blue;
       }
     `;
   }

@@ -20,6 +20,11 @@ import {
   NODE_SHADOW_ROOT_CLASS,
   NODE_LABEL_CLASS,
   NODE_LABEL_SIZE,
+  POINTERS,
+  POINTER_WIDTH,
+  POINTER_HEIGHT,
+  POINTER_PADDING,
+  POINTER_CLASS,
 } from "./graph-constants.js";
 import { createSvgElement } from "./svg.js";
 
@@ -235,6 +240,35 @@ function renderEdge({
   root.appendChild(line);
 }
 
+function renderPointers({ root, rc }: { root: SVGElement; rc: RoughSVG }) {
+  for (const { label } of POINTERS) {
+    const pointerElm = rc.polygon(
+      [
+        [-POINTER_WIDTH, -POINTER_HEIGHT / 2],
+        [0, -POINTER_HEIGHT / 2],
+        [0 + 5, 0],
+        [0, POINTER_HEIGHT / 2],
+        [-POINTER_WIDTH, POINTER_HEIGHT / 2],
+      ],
+      {
+        fill: "white",
+        fillStyle: "solid",
+      }
+    );
+    pointerElm.setAttribute("class", `${POINTER_CLASS} ${POINTER_CLASS}__${label}`);
+
+    root.appendChild(pointerElm);
+
+    const labelElm = createSvgElement("text");
+    labelElm.textContent = label;
+    labelElm.setAttribute("x", String(-POINTER_WIDTH + Math.floor(POINTER_PADDING / 2)));
+    labelElm.setAttribute("y", String(0));
+    labelElm.setAttribute("alignment-baseline", "central");
+
+    pointerElm.appendChild(labelElm);
+  }
+}
+
 function updateViewBox(root: SVGSVGElement): void {
   const rootBBox = root.getBBox();
 
@@ -271,7 +305,63 @@ function renderGraph({
     renderEdge({ from, to, edge, root, rc });
   }
 
+  renderPointers({ root, rc });
   updateViewBox(root);
+}
+
+function renderStep({
+  step,
+  graph,
+  root,
+}: {
+  step: EventDispatchingStep;
+  graph: Graph;
+  root: SVGSVGElement;
+}) {
+  const { target, currentTarget, composedPath } = step;
+
+  for (const svgNode of Array.from(root.querySelectorAll(".node"))) {
+    const nodeId = svgNode.getAttribute("data-graph-id");
+    const node = graph.node(nodeId!);
+
+    if (node.treeNode === target) {
+      svgNode.classList.add("node__target");
+    } else {
+      svgNode.classList.remove("node__target");
+    }
+
+    if (node.treeNode === currentTarget) {
+      svgNode.classList.add("node__current-target");
+    } else {
+      svgNode.classList.remove("node__current-target");
+    }
+
+    if (composedPath.includes(node.treeNode!)) {
+      svgNode.classList.add("node__composed-path");
+    } else {
+      svgNode.classList.remove("node__composed-path");
+    }
+  }
+
+  const eventPointerElm: SVGElement = root.querySelector(`.${POINTER_CLASS}__event`)!;
+  const currentTargetNode = graph
+    .nodes()
+    .map((nodeId) => graph.node(nodeId)!)
+    .find((node) => node.treeNode === currentTarget)!;
+
+  eventPointerElm.style.transform = `translate(${
+    currentTargetNode.x - currentTargetNode.width / 2
+  }px, ${currentTargetNode.y - currentTargetNode.height / 4}px)`;
+
+  const targetPointerElm: SVGElement = root.querySelector(`.${POINTER_CLASS}__target`)!;
+  const targetNode = graph
+    .nodes()
+    .map((nodeId) => graph.node(nodeId)!)
+    .find((node) => node.treeNode === target)!;
+
+  targetPointerElm.style.transform = `translate(${targetNode.x - targetNode.width / 2}px, ${
+    targetNode.y + currentTargetNode.height / 4
+  }px)`;
 }
 
 export class GraphRenderer {
@@ -297,35 +387,14 @@ export class GraphRenderer {
   }
 
   setStep(step: EventDispatchingStep) {
-    const { root, graph } = this;
-
-    if (!graph) {
+    if (!this.graph) {
       return;
     }
 
-    const { target, currentTarget, composedPath } = step;
-
-    for (const svgNode of Array.from(root.querySelectorAll(".node"))) {
-      const nodeId = svgNode.getAttribute("data-graph-id");
-      const node = graph.node(nodeId!);
-
-      if (node.treeNode === target) {
-        svgNode.classList.add("node__target");
-      } else {
-        svgNode.classList.remove("node__target");
-      }
-
-      if (node.treeNode === currentTarget) {
-        svgNode.classList.add("node__current-target");
-      } else {
-        svgNode.classList.remove("node__current-target");
-      }
-
-      if (composedPath.includes(node.treeNode!)) {
-        svgNode.classList.add("node__composed-path");
-      } else {
-        svgNode.classList.remove("node__composed-path");
-      }
-    }
+    renderStep({
+      step,
+      graph: this.graph,
+      root: this.root,
+    });
   }
 }
