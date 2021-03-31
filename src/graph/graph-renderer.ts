@@ -151,10 +151,17 @@ function renderNode({
   text.setAttribute("y", String(node.y));
   text.setAttribute("alignment-baseline", "central");
   text.setAttribute("text-anchor", "middle");
-  text.textContent =
-    node.type === GraphNodeType.Element
-      ? `<${(node.treeNode as Element).tagName.toLocaleLowerCase()}>`
-      : "#root";
+
+  if (node.type === GraphNodeType.Element) {
+    text.textContent = `<${(node.treeNode as Element).tagName.toLocaleLowerCase()}>`;
+  } else {
+    const { mode } = node.treeNode as ShadowRoot;
+
+    text.innerHTML = `
+      <tspan x="${node.x}">#root</tspan>
+      <tspan x="${node.x}" dy="1.1em">(${mode === "open" ? "🔓 open" : "🔒 closed"})</span>
+    `;
+  }
 
   rect.appendChild(text);
 

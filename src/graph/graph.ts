@@ -52,7 +52,7 @@ export function graphFromDomTree(domTree: DomTree): Graph {
     graph.setNode(id, {
       type,
       treeNode,
-      width: NODE_SIZE,
+      width: type === GraphNodeType.ShadowRoot ? NODE_SIZE * 1.8 : NODE_SIZE,
       height: NODE_SIZE,
     });
   }
