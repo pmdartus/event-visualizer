@@ -343,24 +343,26 @@ function renderStep({
     }
   }
 
-  const eventPointerElm: SVGElement = root.querySelector(`.${POINTER_CLASS}__event`)!;
   const currentTargetNode = graph
     .nodes()
     .map((nodeId) => graph.node(nodeId)!)
     .find((node) => node.treeNode === currentTarget)!;
-
-  eventPointerElm.style.transform = `translate(${
-    currentTargetNode.x - currentTargetNode.width / 2
-  }px, ${currentTargetNode.y - currentTargetNode.height / 4}px)`;
-
-  const targetPointerElm: SVGElement = root.querySelector(`.${POINTER_CLASS}__target`)!;
   const targetNode = graph
     .nodes()
     .map((nodeId) => graph.node(nodeId)!)
     .find((node) => node.treeNode === target)!;
 
+  const eventPointerElm: SVGElement = root.querySelector(`.${POINTER_CLASS}__event`)!;
+  const targetPointerElm: SVGElement = root.querySelector(`.${POINTER_CLASS}__target`)!;
+
+  const verticalOffset = currentTargetNode === targetNode ? currentTargetNode.height / 4 : 0;
+
+  eventPointerElm.style.transform = `translate(${
+    currentTargetNode.x - currentTargetNode.width / 2
+  }px, ${currentTargetNode.y - verticalOffset}px)`;
+
   targetPointerElm.style.transform = `translate(${targetNode.x - targetNode.width / 2}px, ${
-    targetNode.y + currentTargetNode.height / 4
+    targetNode.y + verticalOffset
   }px)`;
 }
 

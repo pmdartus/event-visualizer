@@ -63,16 +63,17 @@ export class EventGraph extends LitElement {
       }
 
       .pointer {
-        fill: white;
         transition: transform 0.5s;
       }
 
       .pointer__event > path {
-        fill: red;
+        fill: #f9a825;
+        stroke: #bc5100;
       }
 
       .pointer__target > path {
-        fill: blue;
+        fill: #c7a4ff;
+        stroke: #65499c;
       }
     `;
   }
