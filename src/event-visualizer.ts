@@ -65,7 +65,7 @@ export default class EventVisualizer extends LitElement {
   }
 
   protected updated(props: PropertyValues) {
-    if (props.has("eventcomposed") || props.has("eventbubbles")) {
+    if (props.has("eventComposed") || props.has("eventBubbles")) {
       this.computeEventDispatchingStep();
     }
   }

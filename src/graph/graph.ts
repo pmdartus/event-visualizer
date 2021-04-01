@@ -5,8 +5,10 @@ import { DomTree, TreeNode } from "../simulator.js";
 import {
   GRAPH_PADDING,
   HORIZONTAL_SPACING,
-  NODE_SIZE,
+  ELEMENT_NODE_WIDTH,
   VERTICAL_SPACING,
+  NODE_HEIGHT,
+  ELEMENT_SHADOW_ROOT_WIDTH,
 } from "./graph-constants.js";
 
 export enum GraphNodeType {
@@ -52,8 +54,8 @@ export function graphFromDomTree(domTree: DomTree): Graph {
     graph.setNode(id, {
       type,
       treeNode,
-      width: NODE_SIZE,
-      height: NODE_SIZE,
+      width: type === GraphNodeType.Element ? ELEMENT_NODE_WIDTH : ELEMENT_SHADOW_ROOT_WIDTH,
+      height: NODE_HEIGHT,
     });
   }
 

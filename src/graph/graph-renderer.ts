@@ -14,12 +14,11 @@ import {
   GRAPH_PADDING,
   SHADOW_TREE_PADDING,
   CURVE_TIGHTNESS,
-  SHADOW_TREE_CLASS,
-  NODE_CLASS,
-  NODE_ELEMENT_CLASS,
-  NODE_SHADOW_ROOT_CLASS,
-  NODE_LABEL_CLASS,
   NODE_LABEL_SIZE,
+  POINTERS,
+  POINTER_WIDTH,
+  POINTER_HEIGHT,
+  POINTER_PADDING,
 } from "./graph-constants.js";
 import { createSvgElement } from "./svg.js";
 
@@ -97,13 +96,12 @@ function renderShadowTrees({
         maxX - minX + 2 * maxDepth * SHADOW_TREE_PADDING,
         maxY - minY + 2 * maxDepth * SHADOW_TREE_PADDING,
         {
-          fill: "rgba(100, 100, 100, 0.2)",
-          stroke: "rgb(80, 80, 80)",
+          fill: "white",
           fillStyle: "solid",
         }
       );
 
-      rect.classList.add(SHADOW_TREE_CLASS);
+      rect.classList.add("shadow-tree");
 
       root.appendChild(rect);
     }
@@ -127,16 +125,14 @@ function renderNode({
     node.width,
     node.height,
     {
-      fill: "#FFF",
+      fill: "white",
       fillStyle: "solid",
     }
   );
   rect.setAttribute("data-graph-id", id);
   rect.setAttribute(
     "class",
-    `${NODE_CLASS} ${
-      node.type === GraphNodeType.Element ? NODE_ELEMENT_CLASS : NODE_SHADOW_ROOT_CLASS
-    }`
+    `node node__${node.type === GraphNodeType.Element ? "element" : "shadow-root"}`
   );
 
   root.appendChild(rect);
@@ -144,12 +140,22 @@ function renderNode({
   const text = createSvgElement("text");
   text.setAttribute("x", String(node.x));
   text.setAttribute("y", String(node.y));
-  text.setAttribute("alignment-baseline", "central");
+  text.setAttribute("dominant-baseline", "central");
   text.setAttribute("text-anchor", "middle");
-  text.textContent =
-    node.type === GraphNodeType.Element
-      ? `<${(node.treeNode as Element).tagName.toLocaleLowerCase()}>`
-      : "#root";
+
+  if (node.type === GraphNodeType.Element) {
+    text.textContent = `<${(node.treeNode as Element).tagName.toLocaleLowerCase()}>`;
+  } else {
+    const { mode } = node.treeNode as ShadowRoot;
+
+    // The dy attribute defines the offset from the previous element. To center both lines in the
+    // middle of the <text> element, the first <tspan> is shift upward by half a line height relative
+    // to the parent <text>. The second <tspan> is shift by a line height down relative to the
+    // first <tspan>.
+    text.innerHTML =
+      `<tspan x="${node.x}" dy="-0.5em">Shadow Root</tspan>` +
+      `<tspan x="${node.x}" dy="1.1em">(${mode === "open" ? "🔓 open" : "🔒 closed"})</span>`;
+  }
 
   rect.appendChild(text);
 
@@ -184,11 +190,11 @@ function renderNodeLabel({
     NODE_LABEL_SIZE,
     NODE_LABEL_SIZE,
     {
-      fill: "#a9d2f7",
+      fill: "white",
       fillStyle: "solid",
     }
   );
-  labelContainer.setAttribute("class", NODE_LABEL_CLASS);
+  labelContainer.setAttribute("class", "node-label");
 
   root.append(labelContainer);
 
@@ -196,7 +202,7 @@ function renderNodeLabel({
   labelText.textContent = label;
   labelText.setAttribute("x", String(node.x + node.width / 2));
   labelText.setAttribute("y", String(node.y - node.height / 2));
-  labelText.setAttribute("alignment-baseline", "central");
+  labelText.setAttribute("dominant-baseline", "central");
   labelText.setAttribute("text-anchor", "middle");
 
   labelContainer.append(labelText);
@@ -249,6 +255,36 @@ function updateViewBox(root: SVGSVGElement): void {
   );
 }
 
+function renderPointers({ root, rc }: { root: SVGElement; rc: RoughSVG }) {
+  for (const { label } of POINTERS) {
+    // The
+    const pointerElm = rc.polygon(
+      [
+        [-POINTER_WIDTH, -POINTER_HEIGHT / 2],
+        [0, -POINTER_HEIGHT / 2],
+        [0 + 5, 0],
+        [0, POINTER_HEIGHT / 2],
+        [-POINTER_WIDTH, POINTER_HEIGHT / 2],
+      ],
+      {
+        fill: "white",
+        fillStyle: "solid",
+      }
+    );
+    pointerElm.setAttribute("class", `pointer pointer__${label}`);
+
+    root.appendChild(pointerElm);
+
+    const labelElm = createSvgElement("text");
+    labelElm.textContent = label;
+    labelElm.setAttribute("x", String(-POINTER_WIDTH + Math.floor(POINTER_PADDING / 2)));
+    labelElm.setAttribute("y", String(0));
+    labelElm.setAttribute("dominant-baseline", "central");
+
+    pointerElm.appendChild(labelElm);
+  }
+}
+
 function renderGraph({
   graph,
   root,
@@ -272,6 +308,55 @@ function renderGraph({
   }
 
   updateViewBox(root);
+
+  renderPointers({ root, rc });
+}
+
+function renderStep({
+  step,
+  graph,
+  root,
+}: {
+  step: EventDispatchingStep;
+  graph: Graph;
+  root: SVGSVGElement;
+}) {
+  const { target, currentTarget, composedPath } = step;
+
+  // Update composed path nodes
+  for (const svgNode of Array.from(root.querySelectorAll(".node"))) {
+    const nodeId = svgNode.getAttribute("data-graph-id");
+    const node = graph.node(nodeId!);
+
+    if (composedPath.includes(node.treeNode!)) {
+      svgNode.classList.add("node__composed-path");
+    } else {
+      svgNode.classList.remove("node__composed-path");
+    }
+  }
+
+  // Update pointers locations
+  const currentTargetNode = graph
+    .nodes()
+    .map((nodeId) => graph.node(nodeId)!)
+    .find((node) => node.treeNode === currentTarget)!;
+  const targetNode = graph
+    .nodes()
+    .map((nodeId) => graph.node(nodeId)!)
+    .find((node) => node.treeNode === target)!;
+
+  const eventPointerElm: SVGElement = root.querySelector(`.pointer__event`)!;
+  const targetPointerElm: SVGElement = root.querySelector(`.pointer__target`)!;
+
+  const pointerVerticalOffset = currentTargetNode === targetNode ? currentTargetNode.height / 4 : 0;
+
+  eventPointerElm.style.transform = `translate(${
+    currentTargetNode.x - currentTargetNode.width / 2
+  }px, ${currentTargetNode.y - pointerVerticalOffset}px)`;
+
+  targetPointerElm.style.transform = `translate(${targetNode.x - targetNode.width / 2}px, ${
+    targetNode.y + pointerVerticalOffset
+  }px)`;
 }
 
 export class GraphRenderer {
@@ -297,35 +382,14 @@ export class GraphRenderer {
   }
 
   setStep(step: EventDispatchingStep) {
-    const { root, graph } = this;
-
-    if (!graph) {
+    if (!this.graph) {
       return;
     }
 
-    const { target, currentTarget, composedPath } = step;
-
-    for (const svgNode of Array.from(root.querySelectorAll(".node"))) {
-      const nodeId = svgNode.getAttribute("data-graph-id");
-      const node = graph.node(nodeId!);
-
-      if (node.treeNode === target) {
-        svgNode.classList.add("node__target");
-      } else {
-        svgNode.classList.remove("node__target");
-      }
-
-      if (node.treeNode === currentTarget) {
-        svgNode.classList.add("node__current-target");
-      } else {
-        svgNode.classList.remove("node__current-target");
-      }
-
-      if (composedPath.includes(node.treeNode!)) {
-        svgNode.classList.add("node__composed-path");
-      } else {
-        svgNode.classList.remove("node__composed-path");
-      }
-    }
+    renderStep({
+      step,
+      graph: this.graph,
+      root: this.root,
+    });
   }
 }

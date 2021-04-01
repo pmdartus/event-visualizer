@@ -36,29 +36,32 @@ export class EventGraph extends LitElement {
     return css`
       :host {
         display: block;
-
-        --max-height: 500px;
-
-        --node-current-target-fill-color: #1a73e8;
-
-        --node-target-fill-color: #ffa224;
-        --node-target-stroke-color: #e4d60f;
-
-        --node-composed-path-fill-color: #f3ea71;
-        --node-composed-path-stroke-color: #c49000;
-
-        --edge-stroke-color: #505050;
       }
 
       svg {
         width: 100%;
         height: 100%;
-        max-height: var(--max-height);
+        max-height: 500px;
         font-family: monospace;
       }
 
+      .node.node__composed-path > path {
+        fill: #f3ea71;
+        stroke: #908600;
+        stroke-width: 1.5;
+      }
+
+      .node-label > path {
+        fill: #a9d2f7;
+      }
+
+      .shadow-tree > path {
+        fill: rgba(167, 167, 167, 0.3);
+        stroke: #a9a9a9;
+      }
+
       .edge path {
-        stroke: var(--edge-stroke-color);
+        stroke: #505050;
       }
 
       .edge__shadow-root {
@@ -70,20 +73,18 @@ export class EventGraph extends LitElement {
         stroke-linecap: round;
       }
 
-      .node__composed-path > path {
-        fill: var(--node-composed-path-fill-color);
+      .pointer {
+        transition: transform 0.5s;
       }
 
-      .edge__composed-path > path {
-        stroke: var(--node-composed-path-stroke-color);
+      .pointer__event > path {
+        fill: #f9a825;
+        stroke: #bc5100;
       }
 
-      .node__current-target > path {
-        stroke: var(--node-current-target-fill-color);
-      }
-
-      .node__target > path {
-        fill: var(--node-target-fill-color);
+      .pointer__target > path {
+        fill: #c7a4ff;
+        stroke: #65499c;
       }
     `;
   }
