@@ -30,9 +30,17 @@ export function buildDomTree({ content }: HTMLTemplateElement): DomTree {
 
   let node;
   while ((node = remaining.pop())) {
-    if (node instanceof HTMLTemplateElement && node.hasAttribute("shadow-root")) {
+    if (node instanceof HTMLTemplateElement && node.hasAttribute("shadowroot")) {
+      const mode = node.getAttribute("shadowroot");
+
+      if (mode !== "open" && mode !== "closed") {
+        throw new Error(
+          `Invalid shadowroot attribute value. Expected "open" or "closed" but received "${mode}"`
+        );
+      }
+
       const shadowRoot = node.parentElement!.attachShadow({
-        mode: (node.getAttribute("mode") as ShadowRootMode) ?? "open",
+        mode,
       });
 
       // Append the template content in the newly created ShadowRoot and remove the original

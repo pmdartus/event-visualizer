@@ -33,7 +33,7 @@
 
       <template>
         <div id="a">
-          <template shadow-root>
+          <template shadowroot="open">
             <div id="c">
               <div id="d" target></div>
             </div>
@@ -49,9 +49,9 @@
 
       <template>
         <div id="a">
-          <template shadow-root>
+          <template shadowroot="open">
             <div id="c">
-              <template shadow-root>
+              <template shadowroot="open">
                 <div id="e" target></div>
               </template>
               <div id="d"></div>
@@ -65,7 +65,7 @@
     <event-visualizer event-bubbles event-composed>
       <template>
         <div id="a">
-          <template shadow-root>
+          <template shadowroot="open">
             <div id="c">
               <slot id="d"></slot>
               <div id="e"></div>
@@ -81,9 +81,9 @@
     <event-visualizer event-bubbles event-composed>
       <template>
         <div id="a">
-          <template shadow-root mode="closed">
+          <template shadowroot="closed">
             <div id="c">
-              <template shadow-root mode="closed">
+              <template shadowroot="closed">
                 <div id="e" target></div>
               </template>
               <div id="d"></div>
