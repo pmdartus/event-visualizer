@@ -1,4 +1,7 @@
-export const NODE_SIZE = 50;
+export const ELEMENT_NODE_WIDTH = 50;
+export const ELEMENT_SHADOW_ROOT_WIDTH = 110;
+export const NODE_HEIGHT = ELEMENT_NODE_WIDTH;
+
 export const NODE_LABEL_SIZE = 21;
 
 export const HORIZONTAL_SPACING = 70;
@@ -21,12 +24,3 @@ export const POINTERS = [
     label: "event",
   },
 ];
-
-export const NODE_CLASS = "node";
-export const NODE_LABEL_CLASS = "node-label";
-export const NODE_ELEMENT_CLASS = "node__element";
-export const NODE_SHADOW_ROOT_CLASS = "node__shadow-root";
-
-export const SHADOW_TREE_CLASS = "shadow-tree";
-
-export const POINTER_CLASS = "pointer";

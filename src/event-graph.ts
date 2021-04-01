@@ -45,6 +45,21 @@ export class EventGraph extends LitElement {
         font-family: monospace;
       }
 
+      .node.node__composed-path > path {
+        fill: #f3ea71;
+        stroke: #908600;
+        stroke-width: 1.5;
+      }
+
+      .node-label > path {
+        fill: #a9d2f7;
+      }
+
+      .shadow-tree > path {
+        fill: rgba(167, 167, 167, 0.3);
+        stroke: #a9a9a9;
+      }
+
       .edge path {
         stroke: #505050;
       }
@@ -56,10 +71,6 @@ export class EventGraph extends LitElement {
       .edge__assigned-element {
         stroke-dasharray: 1, 4;
         stroke-linecap: round;
-      }
-
-      .node__composed-path > path {
-        fill: #f3ea71;
       }
 
       .pointer {
