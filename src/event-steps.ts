@@ -1,5 +1,4 @@
 import { LitElement, html, css, property, customElement } from "lit-element";
-import { classMap } from "lit-html/directives/class-map";
 
 import { EventDispatchingStep } from "./simulator.js";
 
@@ -84,7 +83,7 @@ export class EventSteps extends LitElement {
             `;
           }
 
-          return html`<li class=${classMap({ active: i === activeStep })}>
+          return html`<li class=${i === activeStep ? "active" : ""}>
             <button @click=${() => this.dispatchStepChange(i)}>
               <div class="counter">${i + 1}</div>
               <div class="description">${content}</div>
