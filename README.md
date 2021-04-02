@@ -1,13 +1,15 @@
 # Event visualizer
 
-Visualize event propagation in the shadow DOM.
+A visualization tool to better understand how events propagate in the shadow DOM.
 
 ![Build status](https://github.com/pmdartus/event-visualizer/actions/workflows/ci.yml/badge.svg)
 ![NPM](https://img.shields.io/npm/v/@pmdartus/event-visualizer)
 
 ## Overview
 
+The way DOM events propagate in the shadow DOM is not intuitive for developers onboarding with web components. Event configuration, DOM structure and `closed` vs. `opened` shadow trees are many factors influencing event propagation.
 
+This project is an attempt to bring clarity to this subject by offering a visual playground explaining how events propagates step-by-step in the shadow DOM.
 
 ## Installation
 
