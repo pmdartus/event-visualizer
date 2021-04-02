@@ -11,6 +11,10 @@ The way DOM events propagate in the shadow DOM is not intuitive for developers o
 
 This project is an attempt to bring clarity to this subject by offering a visual playground explaining how events propagates step-by-step in the shadow DOM.
 
+[![Event visualizer screenshot](images/screenshot.png)](https://codepen.io/pmdartus/pen/GRrWxQY?editors=1000)
+
+**Try it out:** [Demo / Playground](https://codepen.io/pmdartus/pen/GRrWxQY?editors=1000)
+
 ## Installation
 
 This package can be consumed as an NPM package.
