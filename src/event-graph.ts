@@ -1,7 +1,7 @@
 import { LitElement, customElement, html, css, property, PropertyValues } from "lit-element";
 
-import { GraphRenderer } from "./graph/graph-renderer.js";
-import { DomTree, EventDispatchingStep } from "./simulator.js";
+import { GraphRenderer } from "./graph/renderer.js";
+import { DomTree, EventDispatchingStep } from "./dom.js";
 
 @customElement("event-graph")
 export class EventGraph extends LitElement {

@@ -15,12 +15,3 @@ export const CURVE_TIGHTNESS = 0.8;
 export const POINTER_WIDTH = 50;
 export const POINTER_HEIGHT = 20;
 export const POINTER_PADDING = 5;
-
-export const POINTERS = [
-  {
-    label: "target",
-  },
-  {
-    label: "event",
-  },
-];
