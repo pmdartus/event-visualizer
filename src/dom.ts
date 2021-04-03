@@ -115,7 +115,7 @@ export function createDomTree(template: HTMLTemplateElement): DomTree {
   });
 
   let currentElement: Element | undefined;
-  const remainingElements: Element[] = [root];
+  const remainingElements: Element[] = [...Array.from(root.children)];
 
   while ((currentElement = remainingElements.pop())) {
     const label = currentElement.getAttribute("id");

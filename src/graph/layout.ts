@@ -1,29 +1,16 @@
-import dagre, { graphlib, Node, GraphEdge as Edge } from "dagre";
+import dagre, { graphlib } from "dagre";
 
-import { DomTree, TreeNode, TreeNodeType } from "../dom.js";
+import { DomTree, TreeNodeType } from "../dom.js";
+import { Graph, GraphEdgeType } from "./types";
 
-import {
-  GRAPH_PADDING,
-  HORIZONTAL_SPACING,
-  ELEMENT_NODE_WIDTH,
-  VERTICAL_SPACING,
-  NODE_HEIGHT,
-  ELEMENT_SHADOW_ROOT_WIDTH,
-} from "./constants.js";
+const ELEMENT_NODE_WIDTH = 50;
+const ELEMENT_SHADOW_ROOT_WIDTH = 110;
+const NODE_HEIGHT = 50;
 
-export enum GraphEdgeType {
-  Child,
-  ShadowRoot,
-  AssignedElement,
-}
+const HORIZONTAL_SPACING = 70;
+const VERTICAL_SPACING = 50;
 
-interface NodeData {
-  treeNode: TreeNode;
-}
-
-export type Graph = graphlib.Graph<NodeData>;
-export type GraphNode = Node<NodeData>;
-export type GraphEdge = Edge;
+const GRAPH_PADDING = 20;
 
 export function graphFromDomTree(tree: DomTree): Graph {
   const graph: Graph = new graphlib.Graph({});
