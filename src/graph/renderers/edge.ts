@@ -1,4 +1,6 @@
-import { Graph, GraphNode, GraphEdge, GraphEdgeType, RoughSVG } from "../types";
+import { css } from "lit-element";
+
+import { Graph, GraphNode, GraphEdge, GraphEdgeType, RoughSVG } from "../types.js";
 
 const CURVE_TIGHTNESS = 0.8;
 
@@ -44,3 +46,18 @@ export function render({ graph, root, rc }: { graph: Graph; root: SVGSVGElement;
     renderEdge({ from, to, edge, root, rc });
   }
 }
+
+export const styles = css`
+  .edge path {
+    stroke: #505050;
+  }
+
+  .edge__shadow-root {
+    stroke-dasharray: 8;
+  }
+
+  .edge__assigned-element {
+    stroke-dasharray: 1, 4;
+    stroke-linecap: round;
+  }
+`;

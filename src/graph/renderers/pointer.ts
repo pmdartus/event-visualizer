@@ -1,7 +1,9 @@
+import { css } from "lit-element";
+
 import { EventDispatchingStep } from "../../dom.js";
 import { createSvgElement } from "../../utils/svg.js";
 
-import { Graph, RoughSVG } from "../types";
+import { Graph, RoughSVG } from "../types.js";
 
 const POINTERS = ["target", "event"];
 
@@ -75,3 +77,19 @@ export function update({
     targetNode.y + pointerVerticalOffset
   }px)`;
 }
+
+export const styles = css`
+  .pointer {
+    transition: transform 0.5s;
+  }
+
+  .pointer__event > path {
+    fill: #f9a825;
+    stroke: #bc5100;
+  }
+
+  .pointer__target > path {
+    fill: #c7a4ff;
+    stroke: #65499c;
+  }
+`;

@@ -1,7 +1,7 @@
 import rough from "roughjs";
 import { graphlib, Node, GraphEdge as Edge } from "dagre";
 
-import { TreeNode } from "../dom";
+import { TreeNode } from "../dom.js";
 
 export type RoughSVG = ReturnType<typeof rough["svg"]>;
 

@@ -1,7 +1,7 @@
 import dagre, { graphlib } from "dagre";
 
 import { DomTree, TreeNodeType } from "../dom.js";
-import { Graph, GraphEdgeType } from "./types";
+import { Graph, GraphEdgeType } from "./types.js";
 
 const ELEMENT_NODE_WIDTH = 50;
 const ELEMENT_SHADOW_ROOT_WIDTH = 110;

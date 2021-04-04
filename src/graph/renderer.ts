@@ -1,14 +1,26 @@
 import rough from "roughjs";
+import { css } from "lit-element";
 
 import { DomTree, EventDispatchingStep } from "../dom.js";
 
 import { graphFromDomTree } from "./layout.js";
-import { Graph, RoughSVG } from "./types";
+import { Graph, RoughSVG } from "./types.js";
 
-import { render as renderShadowTrees } from "./renderers/shadow-tree";
-import { render as renderNodes, update as updateNodes } from "./renderers/node";
-import { render as renderEdges } from "./renderers/edge";
-import { render as renderPointers, update as updatePointers } from "./renderers/pointer";
+import {
+  render as renderShadowTrees,
+  styles as shadowTreeStyles,
+} from "./renderers/shadow-tree.js";
+import {
+  render as renderNodes,
+  update as updateNodes,
+  styles as nodeStyles,
+} from "./renderers/node.js";
+import { render as renderEdges, styles as edgeStyles } from "./renderers/edge.js";
+import {
+  render as renderPointers,
+  update as updatePointers,
+  styles as pointerStyles,
+} from "./renderers/pointer.js";
 
 function updateViewBox({ root, graph }: { root: SVGSVGElement; graph: Graph }): void {
   const { width, height } = graph.graph();
@@ -59,4 +71,11 @@ export class GraphRenderer {
     updateNodes(config);
     updatePointers(config);
   }
+
+  static styles = css`
+    ${shadowTreeStyles}
+    ${nodeStyles}
+    ${edgeStyles}
+    ${pointerStyles}
+  `;
 }

@@ -1,7 +1,9 @@
+import { css } from "lit-element";
+
 import { TreeNodeType, EventDispatchingStep } from "../../dom.js";
 import { createSvgElement } from "../../utils/svg.js";
 
-import { Graph, GraphNode, RoughSVG } from "../types";
+import { Graph, GraphNode, RoughSVG } from "../types.js";
 
 const NODE_LABEL_SIZE = 21;
 
@@ -112,3 +114,15 @@ export function update({
     }
   }
 }
+
+export const styles = css`
+  .node.node__composed-path > path {
+    fill: #f3ea71;
+    stroke: #908600;
+    stroke-width: 1.5;
+  }
+
+  .node-label > path {
+    fill: #a9d2f7;
+  }
+`;

@@ -1,5 +1,8 @@
-import { DomTree, ShadowRootTreeNode, TreeNodeType } from "../../dom";
-import { Graph, RoughSVG } from "../types";
+import { css } from "lit-element";
+
+import { DomTree, ShadowRootTreeNode, TreeNodeType } from "../../dom.js";
+
+import { Graph, RoughSVG } from "../types.js";
 
 interface BoundingBox {
   x: number;
@@ -101,3 +104,10 @@ export function render({
     }
   }
 }
+
+export const styles = css`
+  .shadow-tree > path {
+    fill: rgba(167, 167, 167, 0.3);
+    stroke: #a9a9a9;
+  }
+`;
