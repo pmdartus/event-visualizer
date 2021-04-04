@@ -4,7 +4,7 @@ import "./event-graph.js";
 import "./player-controls.js";
 import "./event-steps.js";
 
-import { buildDomTree, DomTree, EventDispatchingStep, simulateDispatchEvent } from "./simulator.js";
+import { createDomTree, DomTree, EventDispatchingStep, simulateDispatchEvent } from "./dom.js";
 
 import type { StepChangeEvent } from "./event-steps";
 
@@ -38,7 +38,7 @@ export default class EventVisualizer extends LitElement {
 
     if (template) {
       try {
-        this.tree = buildDomTree(template);
+        this.tree = createDomTree(template);
       } catch (error) {
         console.warn(`Invalid event tree: ${error.message}`);
       }

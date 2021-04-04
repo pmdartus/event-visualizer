@@ -1,7 +1,7 @@
 import { LitElement, customElement, html, css, property, PropertyValues } from "lit-element";
 
-import { GraphRenderer } from "./graph/graph-renderer.js";
-import { DomTree, EventDispatchingStep } from "./simulator.js";
+import { GraphRenderer } from "./graph/renderer.js";
+import { DomTree, EventDispatchingStep } from "./dom.js";
 
 @customElement("event-graph")
 export class EventGraph extends LitElement {
@@ -45,47 +45,7 @@ export class EventGraph extends LitElement {
         font-family: monospace;
       }
 
-      .node.node__composed-path > path {
-        fill: #f3ea71;
-        stroke: #908600;
-        stroke-width: 1.5;
-      }
-
-      .node-label > path {
-        fill: #a9d2f7;
-      }
-
-      .shadow-tree > path {
-        fill: rgba(167, 167, 167, 0.3);
-        stroke: #a9a9a9;
-      }
-
-      .edge path {
-        stroke: #505050;
-      }
-
-      .edge__shadow-root {
-        stroke-dasharray: 8;
-      }
-
-      .edge__assigned-element {
-        stroke-dasharray: 1, 4;
-        stroke-linecap: round;
-      }
-
-      .pointer {
-        transition: transform 0.5s;
-      }
-
-      .pointer__event > path {
-        fill: #f9a825;
-        stroke: #bc5100;
-      }
-
-      .pointer__target > path {
-        fill: #c7a4ff;
-        stroke: #65499c;
-      }
+      ${GraphRenderer.styles}
     `;
   }
 }

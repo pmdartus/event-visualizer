@@ -1,21 +1,15 @@
 import { LitElement, html, css, property, customElement } from "lit-element";
 
-import { EventDispatchingStep } from "./simulator.js";
+import { EventDispatchingStep, TreeNode, TreeNodeType } from "./dom.js";
 
 export type StepChangeEvent = CustomEvent<{ step: number }>;
 
-function getEventTargetLabel(target: EventTarget): string {
-  if (target instanceof Element) {
-    let label = target.tagName.toLocaleLowerCase();
-    if (target.hasAttribute("id")) {
-      label += `#${target.getAttribute("id")}`;
-    }
-    return label;
-  } else if (target instanceof ShadowRoot) {
-    return "[shadow-root]";
+function getNodeLabel(treeNode: TreeNode): string {
+  if (treeNode.type === TreeNodeType.Element) {
+    return `${treeNode.name}${treeNode.label ? `#${treeNode.label}` : ""}`;
+  } else {
+    return `[shadow-root${treeNode.label ? `#${treeNode.label}` : ""}]`;
   }
-
-  throw new Error(`Unknown event target. Can't compute a label for it`);
 }
 
 @customElement("event-steps")
@@ -24,7 +18,7 @@ export class EventSteps extends LitElement {
   @property() activeStep: number = 0;
   @property() eventConfig!: EventInit;
 
-  dispatchStepChange(step: number) {
+  protected dispatchStepChange(step: number) {
     const changeStepEvent: StepChangeEvent = new CustomEvent("stepchange", {
       detail: { step },
     });
@@ -34,6 +28,7 @@ export class EventSteps extends LitElement {
 
   render() {
     const { steps, activeStep, eventConfig } = this;
+
     return html`
       <ol>
         ${steps.map((step, i) => {
@@ -48,12 +43,12 @@ export class EventSteps extends LitElement {
                   new Event({ bubbles: ${eventConfig.bubbles ?? false}, composed:
                   ${eventConfig.composed ?? false}})
                 </code>
-                on <code>${getEventTargetLabel(step.currentTarget)}</code>.
+                on <code>${getNodeLabel(step.currentTarget)}</code>.
               </p>
             `;
           } else {
             content = html`<p>
-              Event propagates to <code>${getEventTargetLabel(step.currentTarget)}</code>.
+              Event propagates to <code>${getNodeLabel(step.currentTarget)}</code>.
             </p>`;
             previousStep = steps[i - 1];
           }
@@ -62,7 +57,7 @@ export class EventSteps extends LitElement {
           if (isEventRetargeted) {
             content = html`
               ${content}
-              <p>Target is set to <code>${getEventTargetLabel(step.target)}</code>.</p>
+              <p>Target is set to <code>${getNodeLabel(step.target)}</code>.</p>
             `;
           }
 
@@ -76,7 +71,7 @@ export class EventSteps extends LitElement {
                 Composed path is set to
                 <code
                   >[${step.composedPath
-                    .map((eventTarget) => getEventTargetLabel(eventTarget))
+                    .map((eventTarget) => getNodeLabel(eventTarget))
                     .join(", ")}]</code
                 >.
               </p>
