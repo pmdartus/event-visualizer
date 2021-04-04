@@ -1,4 +1,3 @@
-import { EventDispatchingStep } from "../../dom.js";
 import { Graph, GraphNode, GraphEdge, GraphEdgeType, RoughSVG } from "../types";
 
 const CURVE_TIGHTNESS = 0.8;
@@ -43,27 +42,5 @@ export function render({ graph, root, rc }: { graph: Graph; root: SVGSVGElement;
     const to = graph.node(graphEdge.w);
     const edge = graph.edge(graphEdge);
     renderEdge({ from, to, edge, root, rc });
-  }
-}
-
-export function update({
-  step,
-  root,
-}: {
-  step: EventDispatchingStep;
-  graph: Graph;
-  root: SVGSVGElement;
-}) {
-  const { composedPath } = step;
-
-  for (const svgNode of Array.from(root.querySelectorAll(".node"))) {
-    const nodeId = svgNode.getAttribute("data-graph-id");
-    const isInComposedPath = composedPath.some((treeNode) => treeNode.id === nodeId);
-
-    if (isInComposedPath) {
-      svgNode.classList.add("node__composed-path");
-    } else {
-      svgNode.classList.remove("node__composed-path");
-    }
   }
 }

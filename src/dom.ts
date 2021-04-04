@@ -12,7 +12,7 @@ interface BaseTreeNode<N extends Node, T extends TreeNodeType> {
   label: string | null;
 }
 
-interface ElementTreeNode extends BaseTreeNode<Element, TreeNodeType.Element> {
+export interface ElementTreeNode extends BaseTreeNode<Element, TreeNodeType.Element> {
   name: string;
 }
 

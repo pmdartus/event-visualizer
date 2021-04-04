@@ -7,7 +7,7 @@ import { Graph, RoughSVG } from "./types";
 
 import { render as renderShadowTrees } from "./renderers/shadow-tree";
 import { render as renderNodes, update as updateNodes } from "./renderers/node";
-import { render as renderEdges, update as updateEdges } from "./renderers/edge";
+import { render as renderEdges } from "./renderers/edge";
 import { render as renderPointers, update as updatePointers } from "./renderers/pointer";
 
 function updateViewBox({ root, graph }: { root: SVGSVGElement; graph: Graph }): void {
@@ -31,6 +31,7 @@ export class GraphRenderer {
     this.graph = graphFromDomTree(tree);
 
     const config = {
+      tree,
       graph: this.graph,
       root: this.root,
       rc: this.rc,
@@ -56,7 +57,6 @@ export class GraphRenderer {
     };
 
     updateNodes(config);
-    updateEdges(config);
     updatePointers(config);
   }
 }

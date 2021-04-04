@@ -1,65 +1,103 @@
-import { Graph, GraphNode, GraphEdge, GraphEdgeType, RoughSVG } from "../types";
+import { DomTree, ShadowRootTreeNode, TreeNodeType } from "../../dom";
+import { Graph, RoughSVG } from "../types";
 
-function getBoundingBox(graph) {}
+interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
-export function render({ graph, root, rc }: { graph: Graph; root: SVGSVGElement; rc: RoughSVG }) {
-  // for (const nodeId of graph.nodes()) {
-  //   const node = graph.node(nodeId);
-  //   if (node.treeNode.type !== tree.ShadowRoot) {
-  //     const shadowRoot = node.treeNode;
-  //     const containedNodes = graph
-  //       .nodes()
-  //       .filter((nodeId) => {
-  //         const { treeNode } = graph.node(nodeId);
-  //         if (treeNode === null) {
-  //           return false;
-  //         }
-  //         let currentRoot = treeNode.getRootNode();
-  //         while (currentRoot instanceof ShadowRoot) {
-  //           if (currentRoot === shadowRoot) {
-  //             return true;
-  //           }
-  //           currentRoot = currentRoot.host.getRootNode();
-  //         }
-  //         return false;
-  //       })
-  //       .map((nodeId) => {
-  //         const node = graph.node(nodeId);
-  //         let depth = 1;
-  //         let currentRoot = node.treeNode?.getRootNode();
-  //         while (currentRoot !== shadowRoot && currentRoot instanceof ShadowRoot) {
-  //           depth++;
-  //           currentRoot = currentRoot.host.getRootNode();
-  //         }
-  //         return {
-  //           node,
-  //           depth,
-  //         };
-  //       });
-  //     let minX = Infinity,
-  //       minY = Infinity;
-  //     let maxX = -Infinity,
-  //       maxY = -Infinity;
-  //     let maxDepth = 1;
-  //     for (const { node, depth } of containedNodes) {
-  //       minX = Math.min(minX, node.x - node.width / 2);
-  //       minY = Math.min(minY, node.y - node.height / 2);
-  //       maxX = Math.max(maxX, node.x + node.width / 2);
-  //       maxY = Math.max(maxY, node.y + node.height / 2);
-  //       maxDepth = Math.max(depth, maxDepth);
-  //     }
-  //     const rect = rc.rectangle(
-  //       minX - maxDepth * SHADOW_TREE_PADDING,
-  //       minY - maxDepth * SHADOW_TREE_PADDING,
-  //       maxX - minX + 2 * maxDepth * SHADOW_TREE_PADDING,
-  //       maxY - minY + 2 * maxDepth * SHADOW_TREE_PADDING,
-  //       {
-  //         fill: "white",
-  //         fillStyle: "solid",
-  //       }
-  //     );
-  //     rect.classList.add("shadow-tree");
-  //     root.appendChild(rect);
-  //   }
-  // }
+const SHADOW_TREE_PADDING = 10;
+
+function isNodeContained(node: Node, root: ShadowRoot): boolean {
+  if (node === root) {
+    return false;
+  }
+
+  let currentRoot = node.getRootNode();
+  while (currentRoot instanceof ShadowRoot) {
+    if (currentRoot === root) {
+      return true;
+    }
+
+    currentRoot = currentRoot.host.getRootNode();
+  }
+
+  return false;
+}
+
+export function render({
+  tree,
+  graph,
+  root,
+  rc,
+}: {
+  tree: DomTree;
+  graph: Graph;
+  root: SVGSVGElement;
+  rc: RoughSVG;
+}) {
+  const shadowTrees = new Map<ShadowRootTreeNode, BoundingBox>();
+
+  const computeShadowTreeBoundingBox = (rootTreeNode: ShadowRootTreeNode): BoundingBox => {
+    let boundingBox = shadowTrees.get(rootTreeNode);
+
+    if (!boundingBox) {
+      const containedNodes = tree.nodes.filter((treeNode) =>
+        isNodeContained(treeNode.domNode, rootTreeNode.domNode)
+      );
+
+      let minX = Infinity,
+        minY = Infinity;
+      let maxX = -Infinity,
+        maxY = -Infinity;
+
+      for (const containedNode of [rootTreeNode, ...containedNodes]) {
+        let nodeBoundingBox: BoundingBox = graph.node(containedNode.id);
+
+        if (rootTreeNode !== containedNode && containedNode.type === TreeNodeType.ShadowRoot) {
+          nodeBoundingBox = computeShadowTreeBoundingBox(containedNode);
+        }
+
+        minX = Math.min(minX, nodeBoundingBox.x - nodeBoundingBox.width / 2);
+        minY = Math.min(minY, nodeBoundingBox.y - nodeBoundingBox.height / 2);
+        maxX = Math.max(maxX, nodeBoundingBox.x + nodeBoundingBox.width / 2);
+        maxY = Math.max(maxY, nodeBoundingBox.y + nodeBoundingBox.height / 2);
+      }
+
+      const width = maxX - minX;
+      const height = maxY - minY;
+
+      boundingBox = {
+        x: minX + width / 2,
+        y: minY + height / 2,
+        width: width + 2 * SHADOW_TREE_PADDING,
+        height: height + 2 * SHADOW_TREE_PADDING,
+      };
+
+      shadowTrees.set(rootTreeNode, boundingBox);
+    }
+
+    return boundingBox;
+  };
+
+  for (const treeNode of tree.nodes) {
+    if (treeNode.type === TreeNodeType.ShadowRoot) {
+      const boundingBox = computeShadowTreeBoundingBox(treeNode);
+
+      const rect = rc.rectangle(
+        boundingBox.x - boundingBox.width / 2,
+        boundingBox.y - boundingBox.height / 2,
+        boundingBox.width,
+        boundingBox.height,
+        {
+          fill: "white",
+          fillStyle: "solid",
+        }
+      );
+      rect.classList.add("shadow-tree");
+      root.appendChild(rect);
+    }
+  }
 }
