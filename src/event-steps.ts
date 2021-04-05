@@ -113,15 +113,20 @@ export class EventSteps extends LitElement {
     });
 
     return html`
-      <button ?disabled=${activeStep === 0} @click=${() => this.dispatchStepChange(activeStep - 1)}>
-        ❬ Previous step
-      </button>
-      <button
-        ?disabled=${activeStep === steps.length - 1}
-        @click=${() => this.dispatchStepChange(activeStep + 1)}
-      >
-        Next step ❭
-      </button>
+      <div class="step-controls">
+        <button
+          ?disabled=${activeStep === 0}
+          @click=${() => this.dispatchStepChange(activeStep - 1)}
+        >
+          <b>❬</b> Previous step
+        </button>
+        <button
+          ?disabled=${activeStep === steps.length - 1}
+          @click=${() => this.dispatchStepChange(activeStep + 1)}
+        >
+          Next step <b>❭</b>
+        </button>
+      </div>
 
       <ol @keydown=${this.handleListKey}>
         ${items}
@@ -132,6 +137,9 @@ export class EventSteps extends LitElement {
   static styles = css`
     :host {
       display: block;
+
+      --button-color: #3b82f6;
+      --button-hover: #2b6cb0;
 
       --step-active-background: #f3f4f6;
 
@@ -144,6 +152,43 @@ export class EventSteps extends LitElement {
       list-style: none;
       padding: 0;
       margin: 0;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: inherit;
+      margin: 0;
+      padding: 0;
+      background-color: transparent;
+      background-image: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      color: #fff;
+      background: var(--button-color);
+      border-radius: var(--border-radius);
+    }
+
+    button:hover {
+      background: var(--button-hover);
+    }
+
+    button[disabled] {
+      background: var(--button-color);
+      opacity: 0.5;
+    }
+
+    .step-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-medium);
+    }
+
+    .steps-controls button {
+      display: block;
     }
 
     .step {
@@ -159,7 +204,7 @@ export class EventSteps extends LitElement {
       line-height: 2em;
       width: 2em;
       min-width: 2em;
-      font-weight: bold;
+      font-weight: 600;
       text-align: center;
       color: #fff;
       background: var(--step-counter-background);

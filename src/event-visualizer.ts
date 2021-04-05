@@ -134,6 +134,7 @@ export default class EventVisualizer extends LitElement {
       --border-style: 1px solid #cdced0;
       --border-radius: 3px;
 
+      --spacing-small: 6px;
       --spacing-medium: 12px;
 
       --target-color: #b39ddb;
