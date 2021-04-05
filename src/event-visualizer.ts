@@ -2,10 +2,11 @@ import { LitElement, html, css, property, customElement, PropertyValues } from "
 
 import "./event-graph.js";
 import "./event-steps.js";
-
+import { StepChangeEvent } from "./event-steps";
 import { createDomTree, DomTree, EventDispatchingStep, simulateDispatchEvent } from "./dom.js";
 
-import type { StepChangeEvent } from "./event-steps";
+import { boxArrowUp } from "./utils/icons.js";
+import { openInCodePen } from "./utils/code-pen.js";
 
 @customElement("event-visualizer")
 export default class EventVisualizer extends LitElement {
@@ -75,10 +76,18 @@ export default class EventVisualizer extends LitElement {
     }
   }
 
+  protected handleEditClick(evt: Event) {
+    evt.preventDefault();
+    openInCodePen(this);
+  }
+
   protected render() {
     return html`
       <div class="header">
-        <div class="label">${this.label}</div>
+        <div class="header__left">
+          <div class="label">${this.label}</div>
+          <a href="#" @click=${this.handleEditClick}> ${boxArrowUp()} Edit </a>
+        </div>
 
         <div class="event-config">
           <div>
@@ -183,10 +192,19 @@ export default class EventVisualizer extends LitElement {
       padding: var(--spacing-medium);
     }
 
-    .header .label {
+    .header .header__left {
       flex-grow: 1;
       margin-right: var(--spacing-medium);
+    }
+
+    .header .label {
       font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .header a {
+      color: var(--color-light);
+      text-decoration: none;
     }
 
     .header .event-config {
