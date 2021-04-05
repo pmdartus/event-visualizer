@@ -106,22 +106,18 @@ export default class EventVisualizer extends LitElement {
       </div>
 
       <div class="main">
-        <div class="left-panel">
-          <event-graph
-            .tree=${this.tree}
-            .steps=${this.steps}
-            .activeStep=${this.activeStep}
-          ></event-graph>
-        </div>
+        <event-graph
+          .tree=${this.tree}
+          .steps=${this.steps}
+          .activeStep=${this.activeStep}
+        ></event-graph>
 
-        <div class="right-panel">
-          <event-steps
-            .steps=${this.steps}
-            .activeStep=${this.activeStep}
-            .eventConfig=${{ bubbles: this.eventBubbles, composed: this.eventComposed }}
-            @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
-          ></event-steps>
-        </div>
+        <event-steps
+          .steps=${this.steps}
+          .activeStep=${this.activeStep}
+          .eventConfig=${{ bubbles: this.eventBubbles, composed: this.eventComposed }}
+          @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
+        ></event-steps>
       </div>
 
       <slot @slotchange=${this.handleTreeChange}></slot>
@@ -162,30 +158,21 @@ export default class EventVisualizer extends LitElement {
 
     .main {
       display: flex;
-      padding: var(--spacing-medium);
     }
 
-    .left-panel {
+    event-graph {
       flex-grow: 1;
-      margin-right: var(--spacing-medium);
+      align-self: stretch;
     }
 
-    .right-panel {
-      width: 500px;
+    event-steps {
+      max-width: 500px;
+      padding: var(--spacing-medium);
     }
 
     @media (max-width: 600px) {
       .main {
         flex-direction: column;
-      }
-
-      .left-panel {
-        margin-right: 0;
-        margin-bottom: var(--spacing-medium);
-      }
-
-      .right-panel {
-        width: 100%;
       }
     }
 
