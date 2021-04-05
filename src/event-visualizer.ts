@@ -10,6 +10,12 @@ import type { StepChangeEvent } from "./event-steps";
 @customElement("event-visualizer")
 export default class EventVisualizer extends LitElement {
   @property({
+    attribute: "label",
+    type: String,
+  })
+  label = "Event propagation";
+
+  @property({
     attribute: "event-bubbles",
     reflect: true,
     type: Boolean,
@@ -71,6 +77,34 @@ export default class EventVisualizer extends LitElement {
 
   protected render() {
     return html`
+      <div class="header">
+        <div class="label">${this.label}</div>
+
+        <div class="event-config">
+          <div>
+            <input
+              id="bubbles"
+              type="checkbox"
+              .checked=${this.eventBubbles}
+              @change=${(evt: Event) =>
+                (this.eventBubbles = (evt.target as HTMLInputElement).checked)}
+            />
+            <label for="bubbles">bubbles</label>
+          </div>
+
+          <div>
+            <input
+              id="composed"
+              type="checkbox"
+              .checked=${this.eventComposed}
+              @change=${(evt: Event) =>
+                (this.eventComposed = (evt.target as HTMLInputElement).checked)}
+            />
+            <label for="composed">composed</label>
+          </div>
+        </div>
+      </div>
+
       <div class="main">
         <div class="left-panel">
           <event-graph
@@ -81,25 +115,6 @@ export default class EventVisualizer extends LitElement {
         </div>
 
         <div class="right-panel">
-          Event configuration:
-          <input
-            id="bubbles"
-            type="checkbox"
-            .checked=${this.eventBubbles}
-            @change=${(evt: Event) =>
-              (this.eventBubbles = (evt.target as HTMLInputElement).checked)}
-          />
-          <label for="bubbles">bubbles</label>
-
-          <input
-            id="composed"
-            type="checkbox"
-            .checked=${this.eventComposed}
-            @change=${(evt: Event) =>
-              (this.eventComposed = (evt.target as HTMLInputElement).checked)}
-          />
-          <label for="composed">composed</label>
-
           <event-steps
             .steps=${this.steps}
             .activeStep=${this.activeStep}
@@ -110,8 +125,6 @@ export default class EventVisualizer extends LitElement {
       </div>
 
       <slot @slotchange=${this.handleTreeChange}></slot>
-
-      <slot class="footer" name="footer"></slot>
     `;
   }
 
@@ -176,11 +189,20 @@ export default class EventVisualizer extends LitElement {
       }
     }
 
-    .footer {
-      display: block;
-      border-top: var(--border-style);
+    .header {
+      display: flex;
+      border-bottom: var(--border-style);
       padding: var(--spacing-medium);
+    }
+
+    .header .label {
+      flex-grow: 1;
+      margin-right: var(--spacing-medium);
       font-weight: 600;
+    }
+
+    .header .event-config {
+      color: var(--color-light);
     }
   `;
 }

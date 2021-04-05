@@ -33,17 +33,17 @@ Alternatively for drop-in consumption this package can directly be loaded from [
 
 ### Properties / Attributes
 
-| Property        | Attribute        | Type      | Default | Description                                                                                                                         |
-| --------------- | ---------------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `eventBubbles`  | `event-bubbles`  | `boolean` | `false` | Indicates wether the dispatched event should [bubbles](https://developer.mozilla.org/en-US/docs/Web/API/Event/bubbles) or not.      |
-| `eventComposed` | `event-composed` | `boolean` | `false` | Indicates wether the dispatched event should be [composed](https://developer.mozilla.org/en-US/docs/Web/API/Event/composed) or not. |
+| Property        | Attribute        | Type      | Default               | Description                                                                                                                         |
+| --------------- | ---------------- | --------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `label`         | `label`          | `string`  | `"Event propagation"` | The label name.                                                                                                                     |
+| `eventBubbles`  | `event-bubbles`  | `boolean` | `false`               | Indicates wether the dispatched event should [bubbles](https://developer.mozilla.org/en-US/docs/Web/API/Event/bubbles) or not.      |
+| `eventComposed` | `event-composed` | `boolean` | `false`               | Indicates wether the dispatched event should be [composed](https://developer.mozilla.org/en-US/docs/Web/API/Event/composed) or not. |
 
 ### Slots
 
-| Name     | Description                                                                                                                                                      |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| default  | Accepts a single `<template>` element representing the DOM tree to visualize. Refer to the [DOM tree definition](#dom-tree-definition) section for more details. |
-| `footer` | Content to render in the footer.                                                                                                                                 |
+| Name    | Description                                                                                                                                                      |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| default | Accepts a single `<template>` element representing the DOM tree to visualize. Refer to the [DOM tree definition](#dom-tree-definition) section for more details. |
 
 ## DOM tree definition
 
@@ -57,17 +57,15 @@ The visualized DOM tree is configured by passing a `<template>` element in the d
   - The DOM should have a one element with the `target` attribute.
 
 ```html
-<event-visualizer>
+<event-visualizer label="Simple tree">
   <template>
     <div id="a">
       <div id="b" target></div>
     </div>
   </template>
-
-  <div slot="footer">Simple tree</div>
 </event-visualizer>
 
-<event-visualizer>
+<event-visualizer label="Simple shadow tree">
   <template>
     <div id="a">
       <template shadowroot="open">
@@ -76,7 +74,5 @@ The visualized DOM tree is configured by passing a `<template>` element in the d
       <div id="c">
     </div>
   </template>
-
-  <div slot="footer">Simple shadow tree</div>
 </event-visualizer>
 ```

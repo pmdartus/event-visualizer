@@ -13,7 +13,7 @@
     </style>
   </head>
   <body>
-    <event-visualizer event-bubbles event-composed>
+    <event-visualizer label="Light DOM tree" event-bubbles event-composed>
       <template>
         <div id="a">
           <div id="b">
@@ -24,13 +24,9 @@
           </div>
         </div>
       </template>
-
-      <div slot="footer">Light DOM tree</div>
     </event-visualizer>
 
-    <event-visualizer event-bubbles event-composed>
-      <div slot="footer">Simple shadow tree</div>
-
+    <event-visualizer label="Simple shadow tree" event-bubbles event-composed>
       <template>
         <div id="a">
           <template shadowroot="open">
@@ -44,9 +40,11 @@
       </template>
     </event-visualizer>
 
-    <event-visualizer event-bubbles event-composed>
-      <div slot="footer">Event dispatching in a nested shadow trees</div>
-
+    <event-visualizer
+      label="Event dispatching in a nested shadow trees"
+      event-bubbles
+      event-composed
+    >
       <template>
         <div id="a">
           <template shadowroot="open">
@@ -62,7 +60,7 @@
       </template>
     </event-visualizer>
 
-    <event-visualizer event-bubbles event-composed>
+    <event-visualizer label="Event dispatching from slotted content" event-bubbles event-composed>
       <template>
         <div id="a">
           <template shadowroot="open">
@@ -74,11 +72,9 @@
           <div id="b" target></div>
         </div>
       </template>
-
-      <div slot="footer">Event dispatching from slotted content</div>
     </event-visualizer>
 
-    <event-visualizer event-bubbles event-composed>
+    <event-visualizer label="Event dispatching from closed shadow" event-bubbles event-composed>
       <template>
         <div id="a">
           <template shadowroot="closed">
@@ -92,8 +88,6 @@
           <div id="b"></div>
         </div>
       </template>
-
-      <div slot="footer">Event dispatching from closed shadow</div>
     </event-visualizer>
 
     <script src="./main.js" type="module"></script>
