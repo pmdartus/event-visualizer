@@ -117,8 +117,8 @@ export function update({
 
 export const styles = css`
   .node.node__composed-path > path {
-    fill: #f3ea71;
-    stroke: #908600;
+    fill: var(--composed-path-color);
+    stroke: var(--composed-path-alt-color);
     stroke-width: 1.5;
   }
 

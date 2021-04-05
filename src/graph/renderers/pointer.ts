@@ -84,12 +84,12 @@ export const styles = css`
   }
 
   .pointer__event > path {
-    fill: #f9a825;
-    stroke: #bc5100;
+    fill: var(--current-target-color);
+    stroke: var(--current-target-alt-color);
   }
 
   .pointer__target > path {
-    fill: #c7a4ff;
-    stroke: #65499c;
+    fill: var(--target-color);
+    stroke: var(--target-alt-color);
   }
 `;

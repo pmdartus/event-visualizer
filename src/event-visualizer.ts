@@ -1,7 +1,6 @@
 import { LitElement, html, css, property, customElement, PropertyValues } from "lit-element";
 
 import "./event-graph.js";
-import "./player-controls.js";
 import "./event-steps.js";
 
 import { createDomTree, DomTree, EventDispatchingStep, simulateDispatchEvent } from "./dom.js";
@@ -101,12 +100,6 @@ export default class EventVisualizer extends LitElement {
           />
           <label for="composed">composed</label>
 
-          <player-controls
-            .steps=${this.steps}
-            .activeStep=${this.activeStep}
-            @stepchange=${(evt: StepChangeEvent) => (this.activeStep = evt.detail.step)}
-          ></player-controls>
-
           <event-steps
             .steps=${this.steps}
             .activeStep=${this.activeStep}
@@ -124,15 +117,31 @@ export default class EventVisualizer extends LitElement {
 
   static styles = css`
     :host {
-      --border-color: #eee;
-      --padding-size: 0.5em;
+      --font-family: Helvetica, Arial, Sans-Serif;
+      --color: #212121;
+      --color-light: #64748b;
+      --background-color: #fff;
 
-      font-family: arial, sans-serif;
-      color: #212121;
-      background-color: #fff;
+      --border-style: 1px solid #cdced0;
+      --border-radius: 3px;
 
-      border: 1px solid var(--border-color);
-      border-radius: 5px;
+      --spacing-medium: 12px;
+
+      --target-color: #b39ddb;
+      --target-alt-color: #5e35b1;
+      --current-target-color: #a5d6a7;
+      --current-target-alt-color: #2e7d32;
+      --composed-path-color: #fde68a;
+      --composed-path-alt-color: #ff6f00;
+    }
+
+    :host {
+      font-family: var(--font-family);
+      color: var(--color);
+      background-color: var(--background-color);
+
+      border: var(--border-style);
+      border-radius: var(--border-radius);
 
       display: flex;
       flex-direction: column;
@@ -140,16 +149,16 @@ export default class EventVisualizer extends LitElement {
 
     .main {
       display: flex;
-      padding: var(--padding-size);
+      padding: var(--spacing-medium);
     }
 
     .left-panel {
       flex-grow: 1;
-      max-height: 500px;
+      margin-right: var(--spacing-medium);
     }
 
     .right-panel {
-      width: 400px;
+      width: 500px;
     }
 
     @media (max-width: 600px) {
@@ -157,20 +166,21 @@ export default class EventVisualizer extends LitElement {
         flex-direction: column;
       }
 
+      .left-panel {
+        margin-right: 0;
+        margin-bottom: var(--spacing-medium);
+      }
+
       .right-panel {
         width: 100%;
       }
     }
 
-    player-controls,
-    event-steps {
-      margin-top: 0.5em;
-    }
-
     .footer {
       display: block;
-      border-top: 1px solid var(--border-color);
-      padding: var(--padding-size);
+      border-top: var(--border-style);
+      padding: var(--spacing-medium);
+      font-weight: 600;
     }
   `;
 }

@@ -50,8 +50,8 @@ export class GraphRenderer {
     };
 
     renderShadowTrees(config);
-    renderNodes(config);
     renderEdges(config);
+    renderNodes(config);
     renderPointers(config);
 
     updateViewBox(config);
