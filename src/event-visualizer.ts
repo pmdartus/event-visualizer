@@ -90,7 +90,7 @@ export default class EventVisualizer extends LitElement {
         </div>
 
         <div class="event-config">
-          <div>
+          <div class="event-config__option">
             <input
               id="bubbles"
               type="checkbox"
@@ -101,7 +101,7 @@ export default class EventVisualizer extends LitElement {
             <label for="bubbles">bubbles</label>
           </div>
 
-          <div>
+          <div class="event-config__option">
             <input
               id="composed"
               type="checkbox"
@@ -207,8 +207,12 @@ export default class EventVisualizer extends LitElement {
       text-decoration: none;
     }
 
-    .header .event-config {
+    .event-config {
       color: var(--color-light);
+    }
+
+    .event-config__option {
+      display: flex;
     }
   `;
 }

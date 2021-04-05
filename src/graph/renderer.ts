@@ -22,9 +22,14 @@ import {
   styles as pointerStyles,
 } from "./renderers/pointer.js";
 
+const GRAPH_PADDING = 20;
+
 function updateViewBox({ root, graph }: { root: SVGSVGElement; graph: Graph }): void {
-  const { width, height } = graph.graph();
-  root.setAttribute("viewBox", [0, 0, width, height].join(" "));
+  const { width, height } = root.getBBox();
+  root.setAttribute(
+    "viewBox",
+    [-GRAPH_PADDING, -GRAPH_PADDING, width + GRAPH_PADDING, height + GRAPH_PADDING].join(" ")
+  );
 }
 
 export class GraphRenderer {
@@ -52,9 +57,10 @@ export class GraphRenderer {
     renderShadowTrees(config);
     renderEdges(config);
     renderNodes(config);
-    renderPointers(config);
 
     updateViewBox(config);
+
+    renderPointers(config);
   }
 
   setStep(step: EventDispatchingStep) {
