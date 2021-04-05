@@ -2,7 +2,7 @@
   "compilerOptions": {
     // Project options
     "target": "ESNext",
-    "lib": ["esnext", "dom"],
+    "lib": ["ES2020", "dom"],
     "outDir": "lib",
     "sourceMap": true,
     "declaration": true,

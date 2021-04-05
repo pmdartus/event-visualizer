@@ -10,16 +10,12 @@ const NODE_HEIGHT = 50;
 const HORIZONTAL_SPACING = 70;
 const VERTICAL_SPACING = 50;
 
-const GRAPH_PADDING = 20;
-
 export function graphFromDomTree(tree: DomTree): Graph {
   const graph: Graph = new graphlib.Graph({});
 
   graph.setGraph({
     nodesep: HORIZONTAL_SPACING,
     ranksep: VERTICAL_SPACING,
-    marginx: GRAPH_PADDING,
-    marginy: GRAPH_PADDING,
   });
 
   for (const treeNode of tree.nodes) {

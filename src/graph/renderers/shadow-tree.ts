@@ -107,7 +107,7 @@ export function render({
 
 export const styles = css`
   .shadow-tree > path {
-    fill: rgba(167, 167, 167, 0.3);
-    stroke: #a9a9a9;
+    fill: rgb(71 85 105 / 8%);
+    stroke: rgb(71 85 105 / 50%);
   }
 `;
