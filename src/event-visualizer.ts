@@ -6,7 +6,7 @@ import { StepChangeEvent } from "./event-steps";
 import { createDomTree, DomTree, EventDispatchingStep, simulateDispatchEvent } from "./dom.js";
 
 import { boxArrowUp } from "./utils/icons.js";
-import { openInCodePen } from "./utils/code-pen.js";
+import { openInCodePen } from "./utils/codepen.js";
 
 @customElement("event-visualizer")
 export default class EventVisualizer extends LitElement {
@@ -155,6 +155,8 @@ export default class EventVisualizer extends LitElement {
     }
 
     :host {
+      all: initial;
+
       font-family: var(--font-family);
       color: var(--color);
       background-color: var(--background-color);
@@ -213,6 +215,7 @@ export default class EventVisualizer extends LitElement {
 
     .event-config__option {
       display: flex;
+      align-items: baseline;
     }
   `;
 }
