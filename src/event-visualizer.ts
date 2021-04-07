@@ -170,6 +170,7 @@ export default class EventVisualizer extends LitElement {
 
     .main {
       display: flex;
+      flex-direction: column;
     }
 
     event-graph {
@@ -178,13 +179,16 @@ export default class EventVisualizer extends LitElement {
     }
 
     event-steps {
-      max-width: 500px;
       padding: var(--spacing-medium);
     }
 
-    @media (max-width: 600px) {
+    @media (min-width: 680px) {
       .main {
-        flex-direction: column;
+        flex-direction: row;
+      }
+
+      event-steps {
+        max-width: 400px;
       }
     }
 

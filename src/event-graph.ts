@@ -35,7 +35,8 @@ export class EventGraph extends LitElement {
   static get styles() {
     return css`
       :host {
-        display: block;
+        display: flex;
+        align-items: center;
       }
 
       svg {

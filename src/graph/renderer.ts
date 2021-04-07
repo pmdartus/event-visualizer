@@ -22,13 +22,20 @@ import {
   styles as pointerStyles,
 } from "./renderers/pointer.js";
 
-const GRAPH_PADDING = 20;
+// Horizontal padding is larger than vertical padding to fit the pointers on the side of the graph.
+const GRAPH_VERTICAL_PADDING = 20;
+const GRAPH_HORIZONTAL_PADDING = 50;
 
-function updateViewBox({ root, graph }: { root: SVGSVGElement; graph: Graph }): void {
+function updateViewBox({ root }: { root: SVGSVGElement; graph: Graph }): void {
   const { width, height } = root.getBBox();
   root.setAttribute(
     "viewBox",
-    [-GRAPH_PADDING, -GRAPH_PADDING, width + GRAPH_PADDING, height + GRAPH_PADDING].join(" ")
+    [
+      -GRAPH_HORIZONTAL_PADDING,
+      -GRAPH_VERTICAL_PADDING,
+      width + 2 * GRAPH_HORIZONTAL_PADDING,
+      height + 2 * GRAPH_VERTICAL_PADDING,
+    ].join(" ")
   );
 }
 
