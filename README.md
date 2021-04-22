@@ -49,7 +49,7 @@ Alternatively for drop-in consumption this package can directly be loaded from [
 
 The visualized DOM tree is configured by passing a `<template>` element in the default slot. The content of the template tag is interpreted by the `<event-visualizer>` custom element to render the visual previous of the DOM tree and emulate event dispatching:
 
-- Shadow trees can be defined directly in HTML via the [declarative shadow DOM syntax](https://github.com/mfreed7/declarative-shadow-dom).
+- Shadow trees can be defined directly in HTML via the [declarative shadow DOM](https://github.com/mfreed7/declarative-shadow-dom) syntax with the difference difference that the `shadow-root` attribute is renamed to `data-shadow-root`.
 - The original event target is defined by adding a `target` attribute.
 - A label can be added to any element using the `id` attribute.
 - Restrictions:
@@ -68,7 +68,7 @@ The visualized DOM tree is configured by passing a `<template>` element in the d
 <event-visualizer label="Simple shadow tree">
   <template>
     <div id="a">
-      <template shadowroot="open">
+      <template data-shadowroot="open">
         <div id="b" target></div>
       </template>
       <div id="c">

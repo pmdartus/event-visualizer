@@ -184,6 +184,7 @@ export class EventSteps extends LitElement {
     .step-controls {
       display: flex;
       justify-content: space-between;
+      gap: var(--spacing-medium);
       margin-bottom: var(--spacing-medium);
     }
 
