@@ -29,7 +29,7 @@
     <event-visualizer label="Simple shadow tree" event-bubbles event-composed>
       <template>
         <div id="a">
-          <template shadowroot="open">
+          <template data-shadowroot="open">
             <div id="c">
               <div id="d" target></div>
             </div>
@@ -47,9 +47,9 @@
     >
       <template>
         <div id="a">
-          <template shadowroot="open">
+          <template data-shadowroot="open">
             <div id="c">
-              <template shadowroot="open">
+              <template data-shadowroot="open">
                 <div id="e" target></div>
               </template>
               <div id="d"></div>
@@ -63,7 +63,7 @@
     <event-visualizer label="Event dispatching from slotted content" event-bubbles event-composed>
       <template>
         <div id="a">
-          <template shadowroot="open">
+          <template data-shadowroot="open">
             <div id="c">
               <slot id="d"></slot>
               <div id="e"></div>
@@ -77,9 +77,9 @@
     <event-visualizer label="Event dispatching from closed shadow" event-bubbles event-composed>
       <template>
         <div id="a">
-          <template shadowroot="closed">
+          <template data-shadowroot="closed">
             <div id="c">
-              <template shadowroot="closed">
+              <template data-shadowroot="closed">
                 <div id="e" target></div>
               </template>
               <div id="d"></div>

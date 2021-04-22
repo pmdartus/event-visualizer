@@ -43,11 +43,11 @@ const EVENT_NAME = "__TEST_EVENT__";
  * specification.
  */
 function applyDeclarativeShadowDom(template: HTMLTemplateElement): ShadowRoot {
-  const mode = template.getAttribute("shadowroot");
+  const mode = template.getAttribute("data-shadowroot");
 
   if (mode !== "open" && mode !== "closed") {
     throw new Error(
-      `Invalid shadowroot attribute value. Expected "open" or "closed" but received "${mode}"`
+      `Invalid data-shadowroot attribute value. Expected "open" or "closed" but received "${mode}"`
     );
   }
 
@@ -122,7 +122,7 @@ export function createDomTree(template: HTMLTemplateElement): DomTree {
 
     if (
       currentElement instanceof HTMLTemplateElement &&
-      currentElement.hasAttribute("shadowroot")
+      currentElement.hasAttribute("data-shadowroot")
     ) {
       const shadowRoot = applyDeclarativeShadowDom(currentElement);
       createShadowRootTreeNode({
