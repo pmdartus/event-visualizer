@@ -1,4 +1,4 @@
-import { css } from "lit-element";
+import { css } from "lit";
 
 import { DomTree, ShadowRootTreeNode, TreeNodeType } from "../../dom.js";
 

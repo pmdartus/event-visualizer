@@ -1,4 +1,5 @@
-import { LitElement, html, css, property, customElement, PropertyValues } from "lit-element";
+import { LitElement, html, css, PropertyValues } from "lit";
+import { customElement, property } from "lit/decorators.js";
 
 import "./event-graph.js";
 import "./event-steps.js";

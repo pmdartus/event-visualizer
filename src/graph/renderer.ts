@@ -1,5 +1,5 @@
+import { css } from "lit";
 import rough from "roughjs";
-import { css } from "lit-element";
 
 import { DomTree, EventDispatchingStep } from "../dom.js";
 
