@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Visualizer Embedded</title>
+
+    <style>event-visualizer{margin-bottom:2em}
+</style>
+  </head>
+  <body>
+    <event-visualizer label="Light DOM tree" event-bubbles event-composed>
+      <template>
+        <div id="a">
+          <div id="b">
+            <div id="c"></div>
+          </div>
+          <div id="d">
+            <div id="e" target></div>
+          </div>
+        </div>
+      </template>
+    </event-visualizer>
+
+    <event-visualizer label="Simple shadow tree" event-bubbles event-composed>
+      <template>
+        <div id="a">
+          <template data-shadowroot="open">
+            <div id="c">
+              <div id="d" target></div>
+            </div>
+            <div id="e"></div>
+          </template>
+          <div id="b"></div>
+        </div>
+      </template>
+    </event-visualizer>
+
+    <event-visualizer label="Event dispatching in a nested shadow trees" event-bubbles event-composed>
+      <template>
+        <div id="a">
+          <template data-shadowroot="open">
+            <div id="c">
+              <template data-shadowroot="open">
+                <div id="e" target></div>
+              </template>
+              <div id="d"></div>
+            </div>
+          </template>
+          <div id="b"></div>
+        </div>
+      </template>
+    </event-visualizer>
+
+    <event-visualizer label="Event dispatching from slotted content" event-bubbles event-composed>
+      <template>
+        <div id="a">
+          <template data-shadowroot="open">
+            <div id="c">
+              <slot id="d"></slot>
+              <div id="e"></div>
+            </div>
+          </template>
+          <div id="b" target></div>
+        </div>
+      </template>
+    </event-visualizer>
+
+    <event-visualizer label="Event dispatching from closed shadow" event-bubbles event-composed>
+      <template>
+        <div id="a">
+          <template data-shadowroot="closed">
+            <div id="c">
+              <template data-shadowroot="closed">
+                <div id="e" target></div>
+              </template>
+              <div id="d"></div>
+            </div>
+          </template>
+          <div id="b"></div>
+        </div>
+      </template>
+    </event-visualizer>
+
+    <script src="./main.js" type="module"></script>
+  
+
+</body></html>
