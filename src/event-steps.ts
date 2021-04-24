@@ -1,8 +1,8 @@
 import { LitElement, html, css } from "lit";
+import { classMap } from "lit/directives/class-map.js";
 import { customElement, property } from "lit/decorators.js";
 
 import { EventDispatchingStep, TreeNode, TreeNodeType } from "./dom.js";
-import { classMap } from "./utils/class-map.js";
 
 export type StepChangeEvent = CustomEvent<{ step: number }>;
 

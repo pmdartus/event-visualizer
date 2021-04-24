@@ -1,5 +1,6 @@
 import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { ref, createRef } from "lit/directives/ref.js";
 
 import { GraphRenderer } from "./graph/renderer.js";
 import { DomTree, EventDispatchingStep } from "./dom.js";
@@ -10,15 +11,15 @@ export class EventGraph extends LitElement {
   @property() steps!: EventDispatchingStep[];
   @property() activeStep!: number;
 
-  graphRender?: GraphRenderer;
+  private svgRoot = createRef<SVGSVGElement>();
+  private graphRender?: GraphRenderer;
 
   render() {
-    return html`<svg></svg>`;
+    return html`<svg ${ref(this.svgRoot)}></svg>`;
   }
 
   firstUpdated() {
-    const root = this.shadowRoot?.querySelector("svg")!;
-
+    const root = this.svgRoot.value!;
     this.graphRender = new GraphRenderer({
       root,
     });
