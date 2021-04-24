@@ -1,4 +1,4 @@
-import { css } from "lit-element";
+import { css } from "lit";
 
 import { TreeNodeType, EventDispatchingStep } from "../../dom.js";
 import { createSvgElement } from "../../utils/svg.js";

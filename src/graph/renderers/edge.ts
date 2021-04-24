@@ -1,4 +1,4 @@
-import { css } from "lit-element";
+import { css } from "lit";
 
 import { Graph, GraphNode, GraphEdge, GraphEdgeType, RoughSVG } from "../types.js";
 

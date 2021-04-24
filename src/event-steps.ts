@@ -1,7 +1,8 @@
-import { LitElement, html, css, property, customElement } from "lit-element";
+import { LitElement, html, css } from "lit";
+import { classMap } from "lit/directives/class-map.js";
+import { customElement, property } from "lit/decorators.js";
 
 import { EventDispatchingStep, TreeNode, TreeNodeType } from "./dom.js";
-import { classMap } from "./utils/class-map.js";
 
 export type StepChangeEvent = CustomEvent<{ step: number }>;
 
@@ -154,6 +155,7 @@ export class EventSteps extends LitElement {
       margin: 0;
     }
 
+    /* Reset */
     button {
       font-family: inherit;
       font-size: inherit;

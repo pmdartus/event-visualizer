@@ -1,4 +1,4 @@
-import { html } from "lit-element";
+import { html } from "lit";
 
 // prettier-ignore
 export const boxArrowUp = () => html`
